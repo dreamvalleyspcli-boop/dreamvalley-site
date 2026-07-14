@@ -22,7 +22,8 @@ const mono = { fontFamily: "'JetBrains Mono', monospace" };
 // La liste des produits vit maintenant côté serveur (KV) -- modifiable depuis /admin.
 // Ce composant se contente de l'afficher, plus besoin de toucher au code pour ajouter/retirer un article.
 
-function ProductImage({ image, className, onClick, zoomable = false }) {
+function ProductImage({ images, className, onClick, zoomable = false }) {
+  const image = images && images.length > 0 ? images[0] : null;
   return (
     <div
       onClick={onClick}
@@ -40,12 +41,38 @@ function ProductImage({ image, className, onClick, zoomable = false }) {
           <Leaf size={36} color={colors.moss} strokeWidth={1.6} />
         </div>
       )}
+      {zoomable && images && images.length > 1 && (
+        <span
+          className="absolute bottom-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+          style={{ ...mono, backgroundColor: "rgba(13,27,42,0.7)", color: colors.parchment }}
+        >
+          +{images.length - 1}
+        </span>
+      )}
     </div>
   );
 }
 
 function ImageLightbox({ product, onClose }) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [product]);
+
   if (!product) return null;
+  const images = product.images && product.images.length > 0 ? product.images : [null];
+  const hasMultiple = images.length > 1;
+
+  const prev = (e) => {
+    e.stopPropagation();
+    setIndex((i) => (i - 1 + images.length) % images.length);
+  };
+  const next = (e) => {
+    e.stopPropagation();
+    setIndex((i) => (i + 1) % images.length);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-6"
@@ -56,13 +83,54 @@ function ImageLightbox({ product, onClose }) {
         <button onClick={onClose} className="absolute -top-11 right-0 p-1" aria-label="Fermer">
           <X size={26} color={colors.parchment} />
         </button>
-        <div className="rounded-2xl overflow-hidden aspect-square flex items-center justify-center" style={{ backgroundColor: colors.parchmentSoft }}>
-          {product.image ? (
-            <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+
+        <div className="rounded-2xl overflow-hidden aspect-square flex items-center justify-center relative" style={{ backgroundColor: colors.parchmentSoft }}>
+          {images[index] ? (
+            <img src={images[index]} alt={product.name} className="w-full h-full object-contain" />
           ) : (
             <Leaf size={72} color={colors.moss} strokeWidth={1.2} />
           )}
+
+          {hasMultiple && (
+            <>
+              <button
+                onClick={prev}
+                aria-label="Image précédente"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "rgba(13,27,42,0.6)" }}
+              >
+                <ArrowRight size={16} color={colors.parchment} style={{ transform: "rotate(180deg)" }} />
+              </button>
+              <button
+                onClick={next}
+                aria-label="Image suivante"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "rgba(13,27,42,0.6)" }}
+              >
+                <ArrowRight size={16} color={colors.parchment} />
+              </button>
+            </>
+          )}
         </div>
+
+        {hasMultiple && (
+          <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIndex(i);
+                }}
+                className="w-12 h-12 rounded-lg overflow-hidden border-2 flex items-center justify-center shrink-0"
+                style={{ borderColor: i === index ? colors.goldBright : "transparent", backgroundColor: colors.parchmentSoft }}
+              >
+                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Leaf size={16} color={colors.moss} />}
+              </button>
+            ))}
+          </div>
+        )}
+
         <p className="mt-3 text-center px-2" style={{ ...display, color: colors.parchment, fontSize: "18px" }}>
           {product.name}
         </p>
@@ -115,6 +183,7 @@ function CartProvider({ children }) {
     unitAmount: Math.round(p.price * 100),
     quantity: cart[p.id],
     price: p.price,
+    images: p.images,
   }));
   const totalCount = cartItems.reduce((n, i) => n + i.quantity, 0);
   const total = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -245,7 +314,7 @@ function CartDrawer() {
           ) : (
             cartItems.map((item) => (
               <div key={item.id} className="flex items-center gap-3 py-4 border-b" style={{ borderColor: "rgba(22,50,74,0.08)" }}>
-                <ProductImage image={null} className="w-14 h-14 rounded-lg shrink-0" />
+                <ProductImage images={item.images} className="w-14 h-14 rounded-lg shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: colors.bark }}>{item.name}</p>
                   <p className="text-xs mt-0.5" style={{ ...mono, color: colors.moss }}>{item.price.toFixed(2)} €</p>
@@ -362,7 +431,7 @@ function Catalogue() {
             const outOfStock = !p.soon && isOutOfStock(p.id);
             return (
               <div key={p.id} className="rounded-2xl border flex flex-col overflow-hidden" style={{ backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}>
-                <ProductImage image={p.image} className="w-full h-44 sm:h-40" onClick={() => setZoomProduct(p)} zoomable />
+                <ProductImage images={p.images} className="w-full h-44 sm:h-40" onClick={() => setZoomProduct(p)} zoomable />
                 <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
                 <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
                 <p className="px-6 pt-2 text-sm" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
@@ -476,7 +545,7 @@ function AdminPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [addError, setAddError] = useState("");
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ name: "", price: "", tag: "", text: "", image: "", specsText: "", soon: false });
+  const [form, setForm] = useState({ name: "", price: "", tag: "", text: "", imagesText: "", specsText: "", soon: false });
 
   useEffect(() => {
     if (token) {
@@ -536,6 +605,11 @@ function AdminPage() {
         .filter((parts) => parts.length >= 2 && parts[0].trim())
         .map(([label, ...rest]) => ({ label: label.trim(), value: rest.join(":").trim() }));
 
+      const images = form.imagesText
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
       const res = await fetch(`${CHECKOUT_API_URL}/api/admin/products/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -544,7 +618,7 @@ function AdminPage() {
           price: form.price,
           tag: form.tag.trim(),
           text: form.text.trim(),
-          image: form.image.trim() || null,
+          images,
           specs,
           soon: form.soon,
         }),
@@ -552,7 +626,7 @@ function AdminPage() {
       const data = await res.json();
       if (Array.isArray(data)) {
         setProducts(data);
-        setForm({ name: "", price: "", tag: "", text: "", image: "", specsText: "", soon: false });
+        setForm({ name: "", price: "", tag: "", text: "", imagesText: "", specsText: "", soon: false });
         setShowAddForm(false);
       } else {
         setAddError(data.error || "Erreur lors de l'ajout");
@@ -627,7 +701,14 @@ function AdminPage() {
               <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             </div>
             <textarea placeholder="Description" value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
-            <input placeholder="URL de l'image (facultatif)" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+            <textarea
+              placeholder={"URLs des images, une par ligne (facultatif)\nex:\nhttps://.../face-avant.jpg\nhttps://.../face-arriere.jpg"}
+              value={form.imagesText}
+              onChange={(e) => setForm({ ...form, imagesText: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg border"
+              style={{ borderColor: "rgba(22,50,74,0.2)" }}
+            />
             <textarea
               placeholder={"Caractéristiques, une par ligne : Label: Valeur\nex: Langue: Français"}
               value={form.specsText}
