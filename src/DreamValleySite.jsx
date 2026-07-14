@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X } from "lucide-react";
+import React, { useState, useEffect, createContext, useContext } from "react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle } from "lucide-react";
+
+const CHECKOUT_API_URL = "https://dreamvalley-api.dreamvalleyspcli.workers.dev";
 
 const colors = {
   parchment: "#f5ecd9",
@@ -16,24 +18,121 @@ const colors = {
 const display = { fontFamily: "'Fraunces', serif" };
 const mono = { fontFamily: "'JetBrains Mono', monospace" };
 
+// ---------- Produits (modifie librement : ajoute "image": "url" pour remplacer le placeholder) ----------
+const PRODUCTS = [
+  { id: "display-ecarlate", tag: "Scellé — grand format", name: "Display complet — Écarlate & Violet", price: 149.9, text: "Boîte scellée d'origine, contrôlée à réception et avant expédition.", image: null },
+  { id: "booster-unite", tag: "Scellé — à l'unité", name: "Booster à l'unité", price: 4.5, text: "Pour tester une extension ou compléter une collection sans engager tout un display.", image: null },
+  { id: "fr-jp-soon", tag: "À venir", name: "Gamme FR / JP officielle", text: "Produits français et japonais via un futur partenariat distributeur officiel.", soon: true, image: null },
+];
+
+function ProductImage({ image, className }) {
+  if (image) {
+    return <img src={image} alt="" className={className} style={{ objectFit: "cover" }} />;
+  }
+  return (
+    <div className={className} style={{ backgroundColor: colors.parchmentSoft, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Leaf size={36} color={colors.moss} strokeWidth={1.6} />
+    </div>
+  );
+}
+
+// ---------- Panier (contexte global) ----------
+const CartContext = createContext(null);
+const useCart = () => useContext(CartContext);
+
+function CartProvider({ children }) {
+  const [cart, setCart] = useState({});
+  const [stock, setStock] = useState({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [status, setStatus] = useState("idle");
+
+  useEffect(() => {
+    fetch(`${CHECKOUT_API_URL}/api/stock`)
+      .then((r) => r.json())
+      .then(setStock)
+      .catch(() => {});
+  }, []);
+
+  const addToCart = (id) => {
+    setCart((c) => {
+      const current = c[id] || 0;
+      const max = stock[id];
+      if (typeof max === "number" && current >= max) return c; // stock atteint, on bloque
+      return { ...c, [id]: current + 1 };
+    });
+  };
+  const removeFromCart = (id) =>
+    setCart((c) => {
+      const next = { ...c };
+      if (next[id] > 1) next[id] -= 1;
+      else delete next[id];
+      return next;
+    });
+
+  const remainingStock = (id) => {
+    const max = stock[id];
+    if (typeof max !== "number") return Infinity;
+    return Math.max(0, max - (cart[id] || 0));
+  };
+
+  const cartItems = PRODUCTS.filter((p) => cart[p.id]).map((p) => ({
+    id: p.id,
+    name: p.name,
+    unitAmount: Math.round(p.price * 100),
+    quantity: cart[p.id],
+    price: p.price,
+  }));
+  const totalCount = cartItems.reduce((n, i) => n + i.quantity, 0);
+  const total = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  const isOutOfStock = (id) => stock[id] === 0;
+
+  async function checkout() {
+    if (cartItems.length === 0) return;
+    setStatus("loading");
+    try {
+      const res = await fetch(CHECKOUT_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cartItems,
+          successUrl: window.location.origin + "/merci?session_id={CHECKOUT_SESSION_ID}",
+          cancelUrl: window.location.origin + "/achat-annule",
+        }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else throw new Error(data.error || "Erreur inconnue");
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    }
+  }
+
+  return (
+    <CartContext.Provider
+      value={{ cart, cartItems, totalCount, total, addToCart, removeFromCart, drawerOpen, setDrawerOpen, checkout, status, isOutOfStock, remainingStock }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
+}
+
 function Eyebrow({ children, dark }) {
   return (
-    <span
-      style={{ ...mono, color: dark ? colors.tealGlow : colors.moss, letterSpacing: "0.14em" }}
-      className="text-xs uppercase"
-    >
+    <span style={{ ...mono, color: dark ? colors.tealGlow : colors.moss, letterSpacing: "0.14em" }} className="text-xs uppercase">
       {children}
     </span>
   );
 }
 
+// ---------- Nav ----------
 function NavBar() {
   const [open, setOpen] = useState(false);
+  const { totalCount, setDrawerOpen } = useCart();
+
   return (
-    <header
-      className="sticky top-0 z-20 backdrop-blur border-b"
-      style={{ backgroundColor: "rgba(245,236,217,0.88)", borderColor: "rgba(31,61,44,0.12)" }}
-    >
+    <header className="sticky top-0 z-20 backdrop-blur border-b" style={{ backgroundColor: "rgba(245,236,217,0.88)", borderColor: "rgba(31,61,44,0.12)" }}>
       <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
         <a href="#top" className="flex items-center gap-2 no-underline" style={{ ...display, fontStyle: "italic", fontWeight: 600, fontSize: "20px", color: colors.ink }}>
           <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 shrink-0">
@@ -43,32 +142,36 @@ function NavBar() {
           <span style={{ fontStyle: "normal", color: colors.moss, fontSize: "14px" }}>TCG</span>
         </a>
 
-        <a
-          href="#communaute"
-          className="hidden sm:inline-flex items-center rounded-full px-4 py-2 text-xs no-underline transition-colors"
-          style={{ ...mono, backgroundColor: colors.ink, color: colors.parchment, letterSpacing: "0.04em" }}
-        >
-          Rejoindre le Discord
-        </a>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setDrawerOpen(true)} className="relative p-2 rounded-full" style={{ color: colors.ink }} aria-label="Ouvrir le panier">
+            <ShoppingBag size={22} />
+            {totalCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold"
+                style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+              >
+                {totalCount}
+              </span>
+            )}
+          </button>
 
-        <button
-          onClick={() => setOpen(!open)}
-          className="sm:hidden p-2 rounded-md"
-          style={{ color: colors.ink }}
-          aria-label="Ouvrir le menu"
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+          <a
+            href="#communaute"
+            className="hidden sm:inline-flex items-center rounded-full px-4 py-2 text-xs no-underline"
+            style={{ ...mono, backgroundColor: colors.ink, color: colors.parchment, letterSpacing: "0.04em" }}
+          >
+            Rejoindre le Discord
+          </a>
+
+          <button onClick={() => setOpen(!open)} className="sm:hidden p-2 rounded-md" style={{ color: colors.ink }} aria-label="Ouvrir le menu">
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       {open && (
         <div className="sm:hidden px-6 pb-4">
-          <a
-            href="#communaute"
-            onClick={() => setOpen(false)}
-            className="block text-center rounded-full px-4 py-2 text-xs no-underline"
-            style={{ ...mono, backgroundColor: colors.ink, color: colors.parchment }}
-          >
+          <a href="#communaute" onClick={() => setOpen(false)} className="block text-center rounded-full px-4 py-2 text-xs no-underline" style={{ ...mono, backgroundColor: colors.ink, color: colors.parchment }}>
             Rejoindre le Discord
           </a>
         </div>
@@ -77,58 +180,101 @@ function NavBar() {
   );
 }
 
+// ---------- Tiroir panier ----------
+function CartDrawer() {
+  const { cartItems, totalCount, total, addToCart, removeFromCart, drawerOpen, setDrawerOpen, checkout, status, remainingStock } = useCart();
+
+  return (
+    <>
+      {drawerOpen && <div className="fixed inset-0 z-30" style={{ backgroundColor: "rgba(20,35,26,0.5)" }} onClick={() => setDrawerOpen(false)} />}
+      <aside
+        className="fixed top-0 right-0 h-full z-40 flex flex-col transition-transform duration-300"
+        style={{
+          width: "min(420px, 100vw)",
+          backgroundColor: colors.parchment,
+          transform: drawerOpen ? "translateX(0)" : "translateX(100%)",
+          boxShadow: drawerOpen ? "-8px 0 24px rgba(20,35,26,0.2)" : "none",
+        }}
+      >
+        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: "rgba(31,61,44,0.12)" }}>
+          <h3 style={{ ...display, color: colors.bark, fontSize: "20px" }}>Ton panier</h3>
+          <button onClick={() => setDrawerOpen(false)} style={{ color: colors.ink }} aria-label="Fermer">
+            <X size={22} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {cartItems.length === 0 ? (
+            <p className="text-sm mt-8 text-center" style={{ color: colors.ink, opacity: 0.6 }}>
+              Ton panier est vide pour l'instant.
+            </p>
+          ) : (
+            cartItems.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 py-4 border-b" style={{ borderColor: "rgba(31,61,44,0.08)" }}>
+                <ProductImage image={null} className="w-14 h-14 rounded-lg shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate" style={{ color: colors.bark }}>{item.name}</p>
+                  <p className="text-xs mt-0.5" style={{ ...mono, color: colors.moss }}>{item.price.toFixed(2)} €</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 rounded-full border flex items-center justify-center" style={{ borderColor: colors.ink }}>
+                    <Minus size={12} color={colors.ink} />
+                  </button>
+                  <span style={mono} className="text-sm w-4 text-center">{item.quantity}</span>
+                  <button onClick={() => addToCart(item.id)} disabled={remainingStock(item.id) <= 0} className="w-6 h-6 rounded-full border flex items-center justify-center disabled:opacity-40" style={{ borderColor: colors.ink }}>
+                    <Plus size={12} color={colors.ink} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {cartItems.length > 0 && (
+          <div className="px-6 py-5 border-t" style={{ borderColor: "rgba(31,61,44,0.12)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <span style={{ color: colors.ink, opacity: 0.7 }} className="text-sm">Total ({totalCount} article{totalCount > 1 ? "s" : ""})</span>
+              <span style={{ ...display, color: colors.bark, fontSize: "20px" }}>{total.toFixed(2)} €</span>
+            </div>
+            <button
+              onClick={checkout}
+              disabled={status === "loading"}
+              className="w-full rounded-full px-6 py-3 text-sm font-semibold disabled:opacity-60"
+              style={{ backgroundColor: colors.ink, color: colors.parchment }}
+            >
+              {status === "loading" ? "Redirection..." : "Payer en sécurité"}
+            </button>
+            {status === "error" && (
+              <p className="mt-3 text-xs" style={{ color: "#b3413a" }}>Une erreur est survenue, réessaie dans un instant.</p>
+            )}
+          </div>
+        )}
+      </aside>
+    </>
+  );
+}
+
 function Hero() {
   return (
     <section className="relative overflow-hidden pt-24 pb-20">
-      <svg
-        viewBox="0 0 1120 420"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full opacity-50 pointer-events-none"
-      >
-        <path
-          d="M-20 40 C 180 90, 120 180, 320 210 S 560 300, 480 360 S 780 400, 1140 380"
-          stroke={colors.tealGlow}
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M-20 40 C 180 90, 120 180, 320 210 S 560 300, 480 360 S 780 400, 1140 380"
-          stroke={colors.gold}
-          strokeWidth="1"
-          fill="none"
-          strokeDasharray="1 10"
-          strokeLinecap="round"
-        />
+      <svg viewBox="0 0 1120 420" preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 w-full h-full opacity-50 pointer-events-none">
+        <path d="M-20 40 C 180 90, 120 180, 320 210 S 560 300, 480 360 S 780 400, 1140 380" stroke={colors.tealGlow} strokeWidth="3" fill="none" strokeLinecap="round" />
+        <path d="M-20 40 C 180 90, 120 180, 320 210 S 560 300, 480 360 S 780 400, 1140 380" stroke={colors.gold} strokeWidth="1" fill="none" strokeDasharray="1 10" strokeLinecap="round" />
       </svg>
-
       <div className="relative max-w-6xl mx-auto px-6">
         <Eyebrow>DreamValleyTCG — Revendeur indépendant</Eyebrow>
-        <h1
-          className="mt-4 max-w-xl"
-          style={{ ...display, fontWeight: 600, fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.08, color: colors.bark }}
-        >
-          Chaque produit a une histoire{" "}
-          <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>avant</span> d'arriver chez vous.
+        <h1 className="mt-4 max-w-xl" style={{ ...display, fontWeight: 600, fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.08, color: colors.bark }}>
+          Chaque produit a une histoire <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>avant</span> d'arriver chez vous.
         </h1>
         <p className="mt-5 max-w-md text-lg" style={{ color: colors.ink, opacity: 0.85 }}>
           Nous sélectionnons et vérifions des produits Pokémon TCG scellés, pour que chaque commande soit une découverte — jamais un pari.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <a
-            href="#communaute"
-            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline transition-transform hover:-translate-y-0.5"
-            style={{ backgroundColor: colors.ink, color: colors.parchment }}
-          >
-            Rejoindre le Discord
-          </a>
-          <a
-            href="#catalogue"
-            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline border-2 transition-colors"
-            style={{ borderColor: colors.ink, color: colors.ink }}
-          >
+          <a href="#catalogue" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
             Voir le catalogue
+          </a>
+          <a href="#communaute" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline border-2" style={{ borderColor: colors.ink, color: colors.ink }}>
+            Rejoindre le Discord
           </a>
         </div>
       </div>
@@ -138,44 +284,22 @@ function Hero() {
 
 function Principles() {
   const items = [
-    {
-      icon: Check,
-      title: "Authenticité vérifiée",
-      text: "Chaque scellé est contrôlé avant expédition — poids, hologramme, numéro de lot. Un doute, et le produit ne part pas.",
-    },
-    {
-      icon: ShieldCheck,
-      title: "Transparence totale",
-      text: "Bons comme mauvais tirages sont montrés, jamais cachés. Le marché mérite des chiffres réels, pas une vitrine triée.",
-    },
-    {
-      icon: Users,
-      title: "Communauté avant tout",
-      text: "Les infos et alertes marché sont partagées avec la communauté avant d'être exploitées commercialement.",
-    },
+    { icon: Check, title: "Authenticité vérifiée", text: "Chaque scellé est contrôlé avant expédition — poids, hologramme, numéro de lot. Un doute, et le produit ne part pas." },
+    { icon: ShieldCheck, title: "Transparence totale", text: "Bons comme mauvais tirages sont montrés, jamais cachés. Le marché mérite des chiffres réels, pas une vitrine triée." },
+    { icon: Users, title: "Communauté avant tout", text: "Les infos et alertes marché sont partagées avec la communauté avant d'être exploitées commercialement." },
   ];
   return (
     <section className="max-w-6xl mx-auto px-6 py-20">
       <div className="max-w-xl mb-12">
         <Eyebrow>Ce qui guide chaque envoi</Eyebrow>
-        <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.bark }}>
-          Trois principes, aucun compromis.
-        </h2>
+        <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.bark }}>Trois principes, aucun compromis.</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
         {items.map(({ icon: Icon, title, text }) => (
-          <div
-            key={title}
-            className="rounded-2xl p-7 border"
-            style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(31,61,44,0.1)" }}
-          >
+          <div key={title} className="rounded-2xl p-7 border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(31,61,44,0.1)" }}>
             <Icon size={28} color={colors.ink} strokeWidth={2.2} />
-            <h3 className="mt-4 text-lg font-semibold" style={{ color: colors.bark }}>
-              {title}
-            </h3>
-            <p className="mt-2 text-sm" style={{ color: colors.ink, opacity: 0.78 }}>
-              {text}
-            </p>
+            <h3 className="mt-4 text-lg font-semibold" style={{ color: colors.bark }}>{title}</h3>
+            <p className="mt-2 text-sm" style={{ color: colors.ink, opacity: 0.78 }}>{text}</p>
           </div>
         ))}
       </div>
@@ -184,46 +308,58 @@ function Principles() {
 }
 
 function Catalogue() {
-  const cards = [
-    { tag: "Scellé — grand format", title: "Displays complets", text: "Boîtes scellées d'origine, contrôlées à réception et avant expédition. Idéal pour les collectionneurs qui veulent l'intégralité d'un tirage." },
-    { tag: "Scellé — à l'unité", title: "Boosters individuels", text: "Pour tester une extension ou compléter une collection sans engager tout un display." },
-    { tag: "À venir", title: "Gamme FR / JP officielle", text: "Produits français et japonais via un futur partenariat distributeur officiel — authenticité garantie à 100%.", soon: true },
-  ];
+  const { cart, addToCart, removeFromCart, isOutOfStock, remainingStock } = useCart();
+
   return (
     <section id="catalogue" className="py-20" style={{ backgroundColor: colors.parchmentSoft }}>
       <div className="max-w-6xl mx-auto px-6">
         <div className="max-w-xl mb-11">
           <Eyebrow>Ce que l'on propose</Eyebrow>
-          <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.bark }}>
-            Le catalogue, en bref.
-          </h2>
+          <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.bark }}>Le catalogue, en bref.</h2>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {cards.map((c) => (
-            <div
-              key={c.title}
-              className="rounded-2xl border flex flex-col overflow-hidden"
-              style={{ backgroundColor: colors.parchment, borderColor: "rgba(31,61,44,0.1)", opacity: c.soon ? 0.75 : 1 }}
-            >
-              <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>
-                {c.tag}
-              </span>
-              <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>
-                {c.title}
-              </h3>
-              <p className="px-6 pt-2 pb-4 text-sm flex-1" style={{ color: colors.ink, opacity: 0.75 }}>
-                {c.text}
-              </p>
-              {c.soon && (
-                <span
-                  className="mx-6 mb-5 w-fit rounded-md border border-dashed px-2.5 py-1 text-[11px]"
-                  style={{ ...mono, color: colors.moss, borderColor: colors.moss }}
-                >
-                  En préparation
-                </span>
-              )}
-            </div>
-          ))}
+          {PRODUCTS.map((p) => {
+            const outOfStock = !p.soon && isOutOfStock(p.id);
+            return (
+              <div key={p.id} className="rounded-2xl border flex flex-col overflow-hidden" style={{ backgroundColor: colors.parchment, borderColor: "rgba(31,61,44,0.1)", opacity: p.soon ? 0.75 : 1 }}>
+                <ProductImage image={p.image} className="w-full h-40" />
+                <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
+                <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
+                <p className="px-6 pt-2 text-sm flex-1" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
+
+                {p.soon ? (
+                  <span className="mx-6 mb-5 w-fit rounded-md border border-dashed px-2.5 py-1 text-[11px]" style={{ ...mono, color: colors.moss, borderColor: colors.moss }}>
+                    En préparation
+                  </span>
+                ) : (
+                  <div className="px-6 pb-6 pt-2 flex items-center justify-between">
+                    <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "18px" }}>{p.price.toFixed(2)} €</span>
+                    {outOfStock ? (
+                      <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
+                    ) : cart[p.id] ? (
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => removeFromCart(p.id)} className="w-7 h-7 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
+                        <span style={mono}>{cart[p.id]}</span>
+                        <button
+                          onClick={() => addToCart(p.id)}
+                          disabled={remainingStock(p.id) <= 0}
+                          className="w-7 h-7 rounded-full border font-bold disabled:opacity-40"
+                          style={{ borderColor: colors.ink, color: colors.ink }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => addToCart(p.id)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+                        Ajouter au panier
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -243,25 +379,14 @@ function Community() {
     <section id="communaute" className="py-20" style={{ backgroundColor: colors.bark }}>
       <div className="max-w-6xl mx-auto px-6">
         <Eyebrow dark>Où nous retrouver</Eyebrow>
-        <h2 className="mt-3 max-w-md" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.parchment }}>
-          La boutique ne dort jamais sur une seule plateforme.
-        </h2>
-        <p className="mt-4 max-w-lg" style={{ color: colors.parchment, opacity: 0.72 }}>
-          Chaque canal a un rôle précis — des lives aux échanges quotidiens avec la communauté.
-        </p>
+        <h2 className="mt-3 max-w-md" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.parchment }}>La boutique ne dort jamais sur une seule plateforme.</h2>
+        <p className="mt-4 max-w-lg" style={{ color: colors.parchment, opacity: 0.72 }}>Chaque canal a un rôle précis — des lives aux échanges quotidiens avec la communauté.</p>
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {links.map((l) => (
-            <a
-              key={l.name}
-              href="#"
-              className="flex items-center justify-between rounded-2xl px-5 py-4 no-underline border transition-colors"
-              style={{ borderColor: "rgba(245,236,217,0.18)", color: colors.parchment }}
-            >
+            <a key={l.name} href="#" className="flex items-center justify-between rounded-2xl px-5 py-4 no-underline border" style={{ borderColor: "rgba(245,236,217,0.18)", color: colors.parchment }}>
               <span>
                 <span className="block font-semibold text-[15px]">{l.name}</span>
-                <span className="block mt-0.5 text-[11px]" style={{ ...mono, color: colors.tealGlow, letterSpacing: "0.04em" }}>
-                  {l.role}
-                </span>
+                <span className="block mt-0.5 text-[11px]" style={{ ...mono, color: colors.tealGlow, letterSpacing: "0.04em" }}>{l.role}</span>
               </span>
               <ArrowRight size={18} color={colors.tealGlow} />
             </a>
@@ -278,25 +403,210 @@ function Footer() {
       <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-start justify-between gap-4">
         <span style={{ ...display, fontStyle: "italic", fontWeight: 600, color: colors.parchment }}>DreamValleyTCG</span>
         <p className="max-w-md text-xs leading-relaxed" style={{ color: "rgba(245,236,217,0.55)" }}>
-          Revendeur indépendant de produits Pokémon TCG scellés. Aucune affiliation avec The Pokémon Company, Nintendo, Game Freak ou Asmodée. Tous les noms et logos de produits cités appartiennent à leurs propriétaires respectifs. © 2026 DreamValleyTCG.
+          Revendeur indépendant de produits Pokémon TCG scellés. Aucune affiliation avec The Pokémon Company, Nintendo, Game Freak ou Asmodée. © 2026 DreamValleyTCG.
         </p>
       </div>
     </footer>
   );
 }
 
-export default function DreamValleySite() {
+// ---------- Page Admin (cachée, protégée par mot de passe) ----------
+function AdminPage() {
+  const [token, setToken] = useState(() => sessionStorage.getItem("dv_admin_token") || "");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [stock, setStock] = useState({});
+  const [saving, setSaving] = useState({});
+
+  useEffect(() => {
+    if (token) {
+      fetch(`${CHECKOUT_API_URL}/api/stock`).then((r) => r.json()).then(setStock).catch(() => {});
+    }
+  }, [token]);
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    setError("");
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.token) {
+        sessionStorage.setItem("dv_admin_token", data.token);
+        setToken(data.token);
+      } else {
+        setError(data.error || "Erreur de connexion");
+      }
+    } catch {
+      setError("Erreur de connexion au serveur");
+    }
+  }
+
+  async function updateStock(productId, quantity) {
+    setSaving((s) => ({ ...s, [productId]: true }));
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/stock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ productId, quantity }),
+      });
+      const data = await res.json();
+      if (!data.error) setStock(data);
+    } finally {
+      setSaving((s) => ({ ...s, [productId]: false }));
+    }
+  }
+
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.bark }}>
+        <form onSubmit={handleLogin} className="w-full max-w-sm p-8 rounded-2xl" style={{ backgroundColor: colors.parchment }}>
+          <div className="flex items-center gap-2 mb-6">
+            <Lock size={20} color={colors.ink} />
+            <h1 style={{ ...display, color: colors.bark, fontSize: "22px" }}>Administration</h1>
+          </div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mot de passe"
+            className="w-full px-4 py-3 rounded-lg border mb-4"
+            style={{ borderColor: "rgba(31,61,44,0.2)", backgroundColor: "#fff" }}
+          />
+          {error && <p className="text-sm mb-4" style={{ color: "#b3413a" }}>{error}</p>}
+          <button type="submit" className="w-full rounded-full px-6 py-3 text-sm font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+            Se connecter
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
-    <div id="top" style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
+    <div className="min-h-screen px-6 py-12" style={{ backgroundColor: colors.parchment }}>
+      <div className="max-w-2xl mx-auto">
+        <h1 style={{ ...display, color: colors.bark, fontSize: "28px" }} className="mb-8">Gestion du stock</h1>
+        <div className="space-y-4">
+          {PRODUCTS.filter((p) => !p.soon).map((p) => (
+            <div key={p.id} className="flex items-center justify-between p-5 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(31,61,44,0.1)" }}>
+              <div>
+                <p className="font-semibold" style={{ color: colors.bark }}>{p.name}</p>
+                <p className="text-xs mt-1" style={mono}>{p.price.toFixed(2)} €</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min="0"
+                  value={stock[p.id] ?? ""}
+                  onChange={(e) => setStock((s) => ({ ...s, [p.id]: Number(e.target.value) }))}
+                  className="w-20 px-3 py-2 rounded-lg border text-center"
+                  style={{ borderColor: "rgba(31,61,44,0.2)" }}
+                  placeholder="—"
+                />
+                <button
+                  onClick={() => updateStock(p.id, stock[p.id] ?? 0)}
+                  disabled={saving[p.id]}
+                  className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60"
+                  style={{ backgroundColor: colors.ink, color: colors.parchment }}
+                >
+                  {saving[p.id] ? "..." : "Enregistrer"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs mt-8" style={{ color: colors.ink, opacity: 0.6 }}>
+          Laisse le champ vide = stock non suivi (toujours affiché comme disponible). Mets 0 pour afficher "Rupture de stock".
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Pages de confirmation ----------
+function SuccessPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: colors.parchment }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
       `}</style>
-      <NavBar />
-      <Hero />
-      <Principles />
-      <Catalogue />
-      <Community />
-      <Footer />
+      <div className="max-w-md text-center">
+        <div className="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.ink }}>
+          <CheckCircle2 size={32} color={colors.parchment} />
+        </div>
+        <Eyebrow>Commande confirmée</Eyebrow>
+        <h1 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,36px)", color: colors.bark }}>
+          Merci pour ta commande.
+        </h1>
+        <p className="mt-4 text-base" style={{ color: colors.ink, opacity: 0.8 }}>
+          Ton paiement a bien été reçu. Un email de confirmation Stripe vient d'arriver dans ta boîte mail, et l'expédition suit sous peu.
+        </p>
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8"
+          style={{ backgroundColor: colors.ink, color: colors.parchment }}
+        >
+          Retour à l'accueil
+        </a>
+      </div>
     </div>
+  );
+}
+
+function CancelPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: colors.parchment }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
+      `}</style>
+      <div className="max-w-md text-center">
+        <div className="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center border-2" style={{ borderColor: colors.ink }}>
+          <XCircle size={32} color={colors.ink} />
+        </div>
+        <Eyebrow>Paiement annulé</Eyebrow>
+        <h1 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,36px)", color: colors.bark }}>
+          Aucun souci, rien n'a été débité.
+        </h1>
+        <p className="mt-4 text-base" style={{ color: colors.ink, opacity: 0.8 }}>
+          Ta commande a été annulée avant paiement. Ton panier est toujours disponible si tu veux réessayer.
+        </p>
+        <a
+          href="/#catalogue"
+          className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8"
+          style={{ backgroundColor: colors.ink, color: colors.parchment }}
+        >
+          Retour au catalogue
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Racine ----------
+export default function DreamValleySite() {
+  const path = typeof window !== "undefined" ? window.location.pathname : "/";
+
+  if (path.startsWith("/admin")) return <AdminPage />;
+  if (path.startsWith("/merci")) return <SuccessPage />;
+  if (path.startsWith("/achat-annule")) return <CancelPage />;
+
+  return (
+    <CartProvider>
+      <div id="top" style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
+        `}</style>
+        <NavBar />
+        <CartDrawer />
+        <Hero />
+        <Principles />
+        <Catalogue />
+        <Community />
+        <Footer />
+      </div>
+    </CartProvider>
   );
 }
