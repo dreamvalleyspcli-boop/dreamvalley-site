@@ -755,11 +755,11 @@ function Hero() {
         </Reveal>
 
         <Reveal delay={100}>
-          <Eyebrow>DreamValleyTCG — Revendeur indépendant</Eyebrow>
+          <Eyebrow>DreamValleyTCG — Là où votre histoire commence</Eyebrow>
         </Reveal>
         <Reveal delay={180}>
           <h1 className="mt-4 max-w-xl" style={{ ...display, fontWeight: 600, fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.08, color: colors.bark }}>
-            Chaque produit a une histoire <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>avant</span> d'arriver chez vous.
+            Bienvenue, chez nous, vous êtes <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>inclu</span> dans l'aventure.
           </h1>
         </Reveal>
         <Reveal delay={260}>
