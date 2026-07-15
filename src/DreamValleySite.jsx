@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
@@ -316,7 +316,7 @@ function ProductModal({ product, onClose }) {
             </div>
 
             <div className="p-5" style={{ backgroundColor: colors.parchment }}>
-              <p className="line-clamp-2" style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
+              <p className="line-clamp-2 pr-9" style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
 
               {!product.soon && (
                 <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
@@ -336,15 +336,17 @@ function ProductModal({ product, onClose }) {
                   )}
                 </div>
               )}
-
-              <button
-                onClick={() => setFlipped(true)}
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold underline"
-                style={{ color: colors.moss }}
-              >
-                Voir les détails →
-              </button>
             </div>
+
+            {/* Bouton retournement -- positionné hors du flux, toujours visible quelle que soit la taille du contenu au-dessus */}
+            <button
+              onClick={() => setFlipped(true)}
+              aria-label="Voir les détails du produit"
+              className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-md"
+              style={{ backgroundColor: colors.ink, color: colors.parchment }}
+            >
+              <Info size={18} />
+            </button>
           </div>
 
           {/* ---- Face arrière : détails ---- */}
@@ -352,7 +354,16 @@ function ProductModal({ product, onClose }) {
             className="absolute inset-0 rounded-2xl overflow-hidden border-2 flex flex-col"
             style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", borderColor: colors.goldBright, backgroundColor: colors.parchment }}
           >
-            <div className="flex-1 overflow-y-auto p-6">
+            <button
+              onClick={() => setFlipped(false)}
+              aria-label="Revoir le visuel du produit"
+              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-md"
+              style={{ backgroundColor: colors.ink, color: colors.parchment }}
+            >
+              <ArrowRight size={16} style={{ transform: "rotate(180deg)" }} />
+            </button>
+
+            <div className="flex-1 overflow-y-auto p-6 pr-12">
               <span className="text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{product.tag}</span>
               <h3 className="mt-1.5" style={{ ...display, color: colors.bark, fontSize: "22px" }}>{product.name}</h3>
               <p className="mt-3 text-sm leading-relaxed" style={{ color: colors.ink, opacity: 0.78 }}>{product.text}</p>
