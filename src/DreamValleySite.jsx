@@ -316,11 +316,10 @@ function ProductModal({ product, onClose }) {
 
               <button
                 onClick={() => setFlipped(true)}
-                aria-label="Voir les détails du produit"
-                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-md"
-                style={{ backgroundColor: "rgba(13,27,42,0.7)", color: colors.parchment }}
+                className="absolute top-3 right-3 z-10 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md"
+                style={{ backgroundColor: "rgba(13,27,42,0.75)", color: colors.parchment }}
               >
-                <Info size={16} />
+                Voir détails
               </button>
             </div>
 
@@ -355,14 +354,13 @@ function ProductModal({ product, onClose }) {
           >
             <button
               onClick={() => setFlipped(false)}
-              aria-label="Revoir le visuel du produit"
-              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-md"
+              className="absolute top-3 right-3 z-10 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md"
               style={{ backgroundColor: colors.ink, color: colors.parchment }}
             >
-              <ArrowRight size={16} style={{ transform: "rotate(180deg)" }} />
+              ← Voir la photo
             </button>
 
-            <div className="flex-1 overflow-y-auto p-6 pr-12">
+            <div className="flex-1 overflow-y-auto p-6 pr-32">
               <span className="text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{product.tag}</span>
               <h3 className="mt-1.5" style={{ ...display, color: colors.bark, fontSize: "22px" }}>{product.name}</h3>
               <p className="mt-3 text-sm leading-relaxed" style={{ color: colors.ink, opacity: 0.78 }}>{product.text}</p>
