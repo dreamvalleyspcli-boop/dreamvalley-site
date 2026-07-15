@@ -525,9 +525,14 @@ function Footer() {
     <footer className="py-10" style={{ backgroundColor: colors.bark, borderTop: "1px solid rgba(245,241,230,0.12)" }}>
       <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-start justify-between gap-4">
         <span style={{ ...display, fontStyle: "italic", fontWeight: 600, color: colors.parchment }}>DreamValleyTCG</span>
-        <p className="max-w-md text-xs leading-relaxed" style={{ color: "rgba(245,241,230,0.55)" }}>
-          Revendeur indépendant de produits Pokémon TCG scellés. Aucune affiliation avec The Pokémon Company, Nintendo, Game Freak ou Asmodée. © 2026 DreamValleyTCG.
-        </p>
+        <div className="flex flex-col items-start sm:items-end gap-2">
+          <a href="/mentions-legales" className="text-xs no-underline" style={{ color: "rgba(245,241,230,0.7)" }}>
+            Mentions légales · CGV · Confidentialité
+          </a>
+          <p className="max-w-md text-xs leading-relaxed" style={{ color: "rgba(245,241,230,0.55)" }}>
+            Revendeur indépendant de produits Pokémon TCG scellés. Aucune affiliation avec The Pokémon Company, Nintendo, Game Freak ou Asmodée. © 2026 DreamValleyTCG.
+          </p>
+        </div>
       </div>
     </footer>
   );
@@ -883,7 +888,90 @@ function AdminPage() {
   );
 }
 
-// ---------- Pages de confirmation ----------
+// ---------- Numéro masqué (anti-scraping bots) ----------
+function PhoneReveal({ number }) {
+  const [revealed, setRevealed] = useState(false);
+  if (revealed) {
+    return (
+      <a href={`tel:${number.replace(/\s|\./g, "")}`} style={{ color: colors.ink, textDecoration: "underline" }}>
+        {number}
+      </a>
+    );
+  }
+  return (
+    <button
+      onClick={() => setRevealed(true)}
+      className="underline text-sm"
+      style={{ color: colors.moss, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+    >
+      Afficher le numéro
+    </button>
+  );
+}
+
+// ---------- Mentions légales / CGV / Confidentialité ----------
+function LegalPage() {
+  const Section = ({ id, title, children }) => (
+    <div id={id} className="mb-12 scroll-mt-24">
+      <h2 style={{ ...display, color: colors.bark, fontSize: "22px" }} className="mb-4">{title}</h2>
+      <div className="space-y-3 text-sm leading-relaxed" style={{ color: colors.ink, opacity: 0.85 }}>
+        {children}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
+      `}</style>
+      <div className="max-w-2xl mx-auto px-5 sm:px-6 py-12">
+        <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-8" style={{ color: colors.ink, opacity: 0.65 }}>
+          <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
+        </a>
+
+        <h1 style={{ ...display, color: colors.bark, fontSize: "32px" }} className="mb-2">Informations légales</h1>
+        <p className="text-sm mb-10" style={{ color: colors.moss }}>
+          <a href="#mentions" style={{ color: colors.moss }}>Mentions légales</a> · <a href="#cgv" style={{ color: colors.moss }}>CGV</a> · <a href="#retractation" style={{ color: colors.moss }}>Droit de rétractation</a> · <a href="#confidentialite" style={{ color: colors.moss }}>Confidentialité</a>
+        </p>
+
+        <Section id="mentions" title="Mentions légales">
+          <p><strong>Éditeur du site</strong> — DreamValleyTCG, entreprise individuelle (auto-entrepreneur).</p>
+          <p>N° SIRET : 887 853 976 00025</p>
+          <p>Siège de l'activité : 1 place de la Libération, 59660 Merville, France</p>
+          <p>Email : dreamvalleyspcli@gmail.com</p>
+          <p>Téléphone : <PhoneReveal number="07 44 42 99 59" /></p>
+          <p>Directeur de la publication : <em>[à compléter — nom et prénom de la personne physique responsable, obligatoire pour une entreprise individuelle]</em></p>
+          <p><strong>Hébergement</strong> — Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, États-Unis — cloudflare.com</p>
+        </Section>
+
+        <Section id="cgv" title="Conditions Générales de Vente">
+          <p><strong>Produits</strong> — DreamValleyTCG propose à la vente des produits scellés Pokémon TCG et articles liés, présentés sur le catalogue du site avec leurs caractéristiques principales.</p>
+          <p><strong>Prix</strong> — Les prix sont indiqués en euros. TVA non applicable, article 293 B du Code Général des Impôts (franchise en base de TVA) — <em>à vérifier selon ta situation fiscale réelle au moment de la mise en ligne</em>.</p>
+          <p><strong>Paiement</strong> — Le paiement s'effectue en ligne par carte bancaire via Stripe, prestataire de paiement sécurisé. DreamValleyTCG n'a à aucun moment accès aux données bancaires du client.</p>
+          <p><strong>Livraison</strong> — Livraison en France métropolitaine et pays limitrophes via Mondial Relay (casier, point relais ou domicile, 3 à 5 jours ouvrés) ou Chronopost (point relais, sous 24h). Les frais de livraison sont affichés avant validation du paiement.</p>
+          <p><strong>Responsabilité</strong> — DreamValleyTCG s'engage à vérifier l'authenticité de chaque produit avant expédition. En cas de produit non conforme, le client dispose des garanties légales de conformité et des vices cachés prévues par le Code civil et le Code de la consommation.</p>
+          <p><strong>Litiges</strong> — En cas de litige, le client peut recourir gratuitement à un médiateur de la consommation. Droit applicable : droit français.</p>
+        </Section>
+
+        <Section id="retractation" title="Droit de rétractation">
+          <p>Conformément à l'article L221-18 du Code de la consommation, le client dispose d'un délai de <strong>14 jours</strong> à compter de la réception du produit pour exercer son droit de rétractation, sans avoir à justifier de motif.</p>
+          <p>Pour exercer ce droit, le client contacte DreamValleyTCG à l'adresse dreamvalleyspcli@gmail.com. Le produit doit être retourné dans son état d'origine.</p>
+          <p><em>Point à vérifier avant mise en ligne publique : le statut d'un produit scellé une fois ouvert au regard des exceptions au droit de rétractation (article L221-28) n'est pas évident à trancher seul — une vérification par un professionnel du droit est recommandée pour sécuriser cette clause.</em></p>
+        </Section>
+
+        <Section id="confidentialite" title="Politique de confidentialité (RGPD)">
+          <p><strong>Données collectées</strong> — Lors d'une commande : nom, email, adresse postale, numéro de téléphone, collectés via le formulaire de paiement Stripe.</p>
+          <p><strong>Finalité</strong> — Ces données sont utilisées exclusivement pour le traitement, l'expédition et le suivi de la commande.</p>
+          <p><strong>Destinataires</strong> — Stripe (traitement du paiement), Cloudflare (hébergement technique). Aucune donnée n'est vendue ou transmise à des fins commerciales tierces.</p>
+          <p><strong>Durée de conservation</strong> — Les données sont conservées le temps nécessaire au traitement de la commande et aux obligations comptables légales.</p>
+          <p><strong>Cookies et traceurs</strong> — Ce site n'utilise pas de cookies de suivi ni d'outils d'analyse d'audience à ce jour. Les polices de caractères sont actuellement chargées depuis les serveurs Google Fonts, ce qui peut entraîner la transmission de l'adresse IP du visiteur à Google LLC ; une migration vers un hébergement local des polices est prévue.</p>
+          <p><strong>Vos droits</strong> — Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, d'effacement et de portabilité de vos données. Pour l'exercer, contactez dreamvalleyspcli@gmail.com.</p>
+        </Section>
+      </div>
+    </div>
+  );
+}
 function SuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: colors.parchment }}>
@@ -949,6 +1037,7 @@ export default function DreamValleySite() {
   if (path.startsWith("/admin")) return <AdminPage />;
   if (path.startsWith("/merci")) return <SuccessPage />;
   if (path.startsWith("/achat-annule")) return <CancelPage />;
+  if (path.startsWith("/mentions-legales")) return <LegalPage />;
 
   return (
     <CartProvider>
