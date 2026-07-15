@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2 } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
@@ -429,6 +429,13 @@ function CartProvider({ children }) {
       return next;
     });
 
+  const removeItemCompletely = (id) =>
+    setCart((c) => {
+      const next = { ...c };
+      delete next[id];
+      return next;
+    });
+
   const remainingStock = (id) => {
     const max = stock[id];
     if (typeof max !== "number") return Infinity;
@@ -472,7 +479,7 @@ function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, cartItems, totalCount, total, addToCart, removeFromCart, drawerOpen, setDrawerOpen, checkout, status, isOutOfStock, remainingStock, products }}
+      value={{ cart, cartItems, totalCount, total, addToCart, removeFromCart, removeItemCompletely, drawerOpen, setDrawerOpen, checkout, status, isOutOfStock, remainingStock, products }}
     >
       {children}
     </CartContext.Provider>
@@ -543,7 +550,7 @@ function NavBar() {
 
 // ---------- Tiroir panier ----------
 function CartDrawer() {
-  const { cartItems, totalCount, total, addToCart, removeFromCart, drawerOpen, setDrawerOpen, checkout, status, remainingStock } = useCart();
+  const { cartItems, totalCount, total, addToCart, removeFromCart, removeItemCompletely, drawerOpen, setDrawerOpen, checkout, status, remainingStock } = useCart();
 
   return (
     <>
@@ -584,6 +591,14 @@ function CartDrawer() {
                   <span style={mono} className="text-sm w-4 text-center">{item.quantity}</span>
                   <button onClick={() => addToCart(item.id)} disabled={remainingStock(item.id) <= 0} className="w-6 h-6 rounded-full border flex items-center justify-center disabled:opacity-40" style={{ borderColor: colors.ink }}>
                     <Plus size={12} color={colors.ink} />
+                  </button>
+                  <button
+                    onClick={() => removeItemCompletely(item.id)}
+                    aria-label={`Retirer ${item.name} du panier`}
+                    className="w-6 h-6 rounded-full flex items-center justify-center ml-1"
+                    style={{ color: "#b3413a" }}
+                  >
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
