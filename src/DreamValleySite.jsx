@@ -363,7 +363,7 @@ function ProductModal({ product, onClose }) {
             <div className="flex-1 overflow-y-auto p-6 pr-32">
               <span className="text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{product.tag}</span>
               <h3 className="mt-1.5" style={{ ...display, color: colors.bark, fontSize: "22px" }}>{product.name}</h3>
-              <p className="mt-3 text-sm leading-relaxed" style={{ color: colors.ink, opacity: 0.78 }}>{product.text}</p>
+              <p className="mt-3 text-sm leading-relaxed whitespace-pre-line" style={{ color: colors.ink, opacity: 0.78 }}>{product.text}</p>
 
               {product.specs && product.specs.length > 0 && (
                 <ul className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "rgba(22,50,74,0.1)" }}>
@@ -758,7 +758,7 @@ function Catalogue() {
                   <ProductImage images={p.images} className="w-full aspect-[3/4]" zoomable />
                   <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
                   <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
-                  <p className="px-6 pt-2 text-sm" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
+                  <p className="px-6 pt-2 text-sm line-clamp-3 whitespace-pre-line" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
 
                   {p.specs && p.specs.length > 0 && (
                     <ul className="px-6 pt-3 space-y-1.5">
@@ -1127,7 +1127,7 @@ function AdminPage() {
               <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
               <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             </div>
-            <textarea placeholder="Description" value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+            <textarea placeholder={"Description (utilise Entrée pour aller à la ligne, ex: séparer les points par des retours à la ligne)"} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={4} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
 
             <div>
               <label className="text-xs font-semibold block mb-1.5" style={{ color: colors.ink }}>
