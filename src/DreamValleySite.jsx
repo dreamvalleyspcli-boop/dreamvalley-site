@@ -757,10 +757,10 @@ function CatalogueCard({ p, onOpenModal }) {
     );
 
   return (
-    <div className="relative h-full" style={{ perspective: "1500px" }}>
+    <div className="relative w-full" style={{ height: "600px", perspective: "1500px" }}>
       <div
-        className="relative w-full h-full transition-transform duration-700"
-        style={{ minHeight: "500px", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+        className="relative w-full transition-transform duration-700"
+        style={{ height: "600px", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
       >
         {/* Face avant -- aperçu */}
         <div
@@ -768,8 +768,8 @@ function CatalogueCard({ p, onOpenModal }) {
           style={{ backfaceVisibility: "hidden", backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}
           onClick={() => onOpenModal(p)}
         >
-          <div className="relative">
-            <ProductImage images={p.images} className="w-full aspect-[3/4]" zoomable />
+          <div className="relative shrink-0">
+            <ProductImage images={p.images} className="w-full h-72 sm:h-80" zoomable />
             <button
               onClick={(e) => {
                 e.stopPropagation();
