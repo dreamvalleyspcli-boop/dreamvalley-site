@@ -275,7 +275,7 @@ function ProductModal({ product, onClose }) {
         <div
           className="relative w-full transition-transform duration-700"
           style={{
-            aspectRatio: "3 / 4",
+            height: "min(600px, 78vh)",
             transformStyle: "preserve-3d",
             transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
           }}
