@@ -242,6 +242,33 @@ function ProductModal({ product, onClose }) {
     setFlipped(false);
   }, [product]);
 
+  // Synchronise l'URL et le titre d'onglet avec le produit affiché -- utile pour le partage de lien et le SEO
+  useEffect(() => {
+    if (!product) return;
+    const previousTitle = document.title;
+    const previousPath = window.location.pathname;
+    const slug = product.slug || product.id;
+
+    document.title = `${product.name} — DreamValleyTCG`;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    const previousDesc = metaDesc ? metaDesc.getAttribute("content") : null;
+    if (metaDesc) {
+      metaDesc.setAttribute("content", (product.text || "").slice(0, 155).replace(/\s+/g, " "));
+    }
+
+    if (previousPath !== `/produit/${slug}`) {
+      window.history.pushState({}, "", `/produit/${slug}`);
+    }
+
+    return () => {
+      document.title = previousTitle;
+      if (metaDesc && previousDesc !== null) metaDesc.setAttribute("content", previousDesc);
+      if (window.location.pathname.startsWith("/produit/")) {
+        window.history.pushState({}, "", "/#catalogue");
+      }
+    };
+  }, [product]);
+
   if (!product) return null;
   const images = product.images && product.images.length > 0 ? product.images : [null];
   const hasMultiple = images.length > 1;
@@ -889,6 +916,17 @@ function CatalogueCard({ p, onOpenModal }) {
 function Catalogue() {
   const { products } = useCart();
   const [activeProduct, setActiveProduct] = useState(null);
+
+  // Si quelqu'un arrive directement sur /produit/un-slug (lien partagé, résultat Google...),
+  // on ouvre automatiquement la fiche correspondante une fois le catalogue chargé.
+  useEffect(() => {
+    if (products.length === 0) return;
+    const match = window.location.pathname.match(/^\/produit\/([a-z0-9-]+)\/?$/);
+    if (match) {
+      const found = products.find((p) => p.slug === match[1] || p.id === match[1]);
+      if (found) setActiveProduct(found);
+    }
+  }, [products]);
 
   return (
     <section id="catalogue" className="py-16 sm:py-20" style={{ backgroundColor: colors.parchmentSoft }}>
