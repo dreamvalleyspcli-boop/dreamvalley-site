@@ -598,7 +598,7 @@ function NavBar() {
       <div className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-6 py-3">
         <a href="#top" className="flex items-center shrink-0">
           {/* Remplace /logo.svg dans public/ par ton vrai logo quand il sera prêt */}
-          <img src="/logo.svg" alt="DreamValleyTCG" className="h-9 sm:h-10 w-auto" />
+          <img src="/favicon-logo.png" alt="DreamValleyTCG" className="h-9 sm:h-10 w-auto" />
         </a>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
