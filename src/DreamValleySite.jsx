@@ -546,7 +546,38 @@ function AdminPage() {
   const [editingId, setEditingId] = useState(null);
   const [addError, setAddError] = useState("");
   const [adding, setAdding] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ name: "", price: "", tag: "", text: "", imagesText: "", specsText: "", soon: false });
+
+  async function handleFileUpload(e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    setAddError("");
+    try {
+      const fd = new FormData();
+      files.forEach((f) => fd.append("files", f));
+      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (data.urls) {
+        setForm((f) => ({
+          ...f,
+          imagesText: [f.imagesText, ...data.urls].filter(Boolean).join("\n"),
+        }));
+      } else {
+        setAddError(data.error || "Échec de l'envoi des images");
+      }
+    } catch {
+      setAddError("Erreur lors de l'envoi des images");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
 
   function startEdit(p) {
     setForm({
@@ -746,8 +777,22 @@ function AdminPage() {
               <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             </div>
             <textarea placeholder="Description" value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={{ color: colors.ink }}>
+                Importer des photos depuis ton ordinateur
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="w-full text-sm"
+              />
+              {uploading && <p className="text-xs mt-1.5" style={{ color: colors.moss }}>Envoi en cours...</p>}
+            </div>
             <textarea
-              placeholder={"URLs des images, une par ligne (facultatif)\nex:\nhttps://.../face-avant.jpg\nhttps://.../face-arriere.jpg"}
+              placeholder={"URLs des images (rempli automatiquement après import, ou colle des liens directs ici)"}
               value={form.imagesText}
               onChange={(e) => setForm({ ...form, imagesText: e.target.value })}
               rows={3}
