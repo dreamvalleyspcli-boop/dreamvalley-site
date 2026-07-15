@@ -40,13 +40,18 @@ function GlobalMotionStyles() {
         0%, 100% { opacity: 0.25; }
         50% { opacity: 0.9; }
       }
+      @keyframes dv-shine {
+        0% { transform: translateX(0) skewX(-18deg); }
+        100% { transform: translateX(340%) skewX(-18deg); }
+      }
+      .dv-shine { animation: dv-shine 3.4s ease-in-out infinite; }
       .dv-petal { animation: dv-fall linear infinite; }
       .dv-river-anim { animation: dv-river-flow 6s linear infinite; }
       .dv-star { animation: dv-twinkle 3s ease-in-out infinite; }
       .dv-reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
       .dv-reveal.dv-in { opacity: 1; transform: translateY(0); }
       @media (prefers-reduced-motion: reduce) {
-        .dv-petal, .dv-river-anim, .dv-star { animation: none !important; }
+        .dv-petal, .dv-river-anim, .dv-star, .dv-shine { animation: none !important; }
         .dv-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
       }
     `}</style>
@@ -118,79 +123,77 @@ function Petals({ count = 10 }) {
 }
 
 // ---------- Bannière illustrée (originale, nuit/torii/cerisiers) ----------
+const SPARKLE_PATH = "M0,-10 C1,-3 3,-1 10,0 C3,1 1,3 0,10 C-1,3 -3,1 -10,0 C-3,-1 -1,-3 0,-10 Z";
+
+function FoilPack({ x, width, top, bottom, rotate, clipId }) {
+  const cx = x + width / 2;
+  const cy = (top + bottom) / 2;
+  const rx = 12;
+  return (
+    <g transform={`rotate(${rotate} ${cx} ${cy})`}>
+      <defs>
+        <clipPath id={clipId}>
+          <rect x={x} y={top} width={width} height={bottom - top} rx={rx} />
+        </clipPath>
+      </defs>
+      <rect x={x} y={top} width={width} height={bottom - top} rx={rx} fill="url(#foilGrad)" stroke="#0d1b2a" strokeWidth="2" />
+      <path d={`M${x + 8} ${top + 34} L${x + width - 8} ${top + 34}`} stroke="#0d1b2a" strokeWidth="2.5" opacity="0.55" />
+      <path d={`M${x} ${top + 10} L${x + width} ${top + 10} L${x + width - 12} ${top + 34} L${x + 12} ${top + 34} Z`} fill="#0d1b2a" opacity="0.28" />
+      <path d={SPARKLE_PATH} transform={`translate(${cx} ${cy + 20}) scale(2.1)`} fill="#f5f1e6" opacity="0.92" />
+      <g clipPath={`url(#${clipId})`}>
+        <rect className="dv-shine" x={x - width} y={top} width={width * 0.5} height={bottom - top} fill="#f5f1e6" opacity="0.16" transform={`skewX(-18)`} />
+      </g>
+    </g>
+  );
+}
+
 function HeroBanner() {
   return (
     <div className="relative w-full overflow-hidden rounded-2xl" style={{ height: "clamp(220px,32vw,340px)", backgroundColor: colors.bark }}>
       <svg viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" className="absolute inset-0 w-full h-full" aria-hidden="true">
         <defs>
-          <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#f3ead0" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#f3ead0" stopOpacity="0" />
+          <radialGradient id="spotGlow" cx="50%" cy="55%" r="55%">
+            <stop offset="0%" stopColor="#e8a8bf" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#e8a8bf" stopOpacity="0" />
           </radialGradient>
+          <linearGradient id="foilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#16324a" />
+            <stop offset="45%" stopColor="#a9821f" />
+            <stop offset="75%" stopColor="#d9a441" />
+            <stop offset="100%" stopColor="#c77b9a" />
+          </linearGradient>
         </defs>
 
         <rect x="0" y="0" width="1200" height="400" fill={colors.bark} />
-        <circle cx="620" cy="130" r="150" fill="url(#moonGlow)" />
-        <circle cx="620" cy="130" r="70" fill="#efe6cf" />
-        <circle cx="645" cy="105" r="7" fill="#d8cfae" opacity="0.5" />
-        <circle cx="600" cy="150" r="5" fill="#d8cfae" opacity="0.5" />
+        <circle cx="600" cy="260" r="260" fill="url(#spotGlow)" />
 
-        {[...Array(18)].map((_, i) => (
-          <circle
+        {[...Array(20)].map((_, i) => (
+          <path
             key={i}
             className="dv-star"
-            cx={(i * 137) % 1200}
-            cy={20 + ((i * 53) % 160)}
-            r={i % 3 === 0 ? 1.6 : 1}
+            d={SPARKLE_PATH}
+            transform={`translate(${(i * 113) % 1200} ${18 + ((i * 47) % 150)}) scale(${i % 3 === 0 ? 0.5 : 0.32})`}
             fill="#e8dfc4"
-            style={{ animationDelay: `${(i % 5) * 0.6}s` }}
+            style={{ animationDelay: `${(i % 6) * 0.5}s` }}
           />
         ))}
 
-        <path d="M0 300 C 200 260, 340 320, 520 285 C 700 250, 820 300, 1000 270 C 1080 258, 1150 268, 1200 275 L1200 400 L0 400 Z" fill="#132c42" />
-        <path d="M0 340 C 220 315, 380 355, 560 335 C 760 312, 900 350, 1200 330 L1200 400 L0 400 Z" fill="#0f2233" />
+        <path d="M0 355 C 240 340, 420 365, 600 352 C 800 338, 980 366, 1200 350 L1200 400 L0 400 Z" fill="#0f2233" />
 
-        <g fill="#173a2c" opacity="0.9">
-          <path d="M90 340 L130 260 L170 340 Z" />
-          <path d="M150 350 L185 285 L220 350 Z" />
-          <path d="M980 345 L1020 270 L1060 345 Z" />
-          <path d="M1040 352 L1075 292 L1110 352 Z" />
+        <g transform="translate(560 345) rotate(-8)">
+          <rect x="-34" y="-58" width="46" height="64" rx="6" fill="#132c42" stroke={colors.goldBright} strokeWidth="1.5" />
+          <path d={SPARKLE_PATH} transform="translate(-11 -26) scale(0.7)" fill={colors.tealGlow} />
         </g>
-
-        <path d="M470 340 C 520 320 680 320 730 340 C 690 375 660 400 600 400 C 540 400 510 375 470 340 Z" fill={colors.tealGlow} opacity="0.55" />
-
-        <g stroke="#241407" strokeWidth="9" fill="none" strokeLinecap="round">
-          <line x1="545" y1="330" x2="545" y2="392" />
-          <line x1="655" y1="330" x2="655" y2="392" />
-          <line x1="530" y1="338" x2="670" y2="338" />
-          <line x1="536" y1="356" x2="664" y2="356" />
+        <g transform="translate(636 348) rotate(10)">
+          <rect x="-30" y="-52" width="44" height="58" rx="6" fill="#132c42" stroke={colors.goldBright} strokeWidth="1.5" />
+          <path d={SPARKLE_PATH} transform="translate(-8 -23) scale(0.65)" fill={colors.tealGlow} />
         </g>
 
-        <g stroke="#5a3420" strokeWidth="3.5" fill="none" opacity="0.9">
-          <path d="M60 60 C 100 40 130 55 150 90" />
-          <path d="M100 55 C 118 50 130 42 138 30" />
-        </g>
-        <g fill={colors.tealGlow}>
-          <circle cx="150" cy="90" r="8" />
-          <circle cx="138" cy="30" r="6" />
-          <circle cx="115" cy="45" r="6.5" />
-          <circle cx="80" cy="52" r="6" />
-          <circle cx="60" cy="60" r="5.5" />
-        </g>
-
-        <g stroke="#5a3420" strokeWidth="3.5" fill="none" opacity="0.9">
-          <path d="M1140 55 C 1100 38 1070 52 1050 86" />
-          <path d="M1100 50 C 1082 46 1070 38 1063 27" />
-        </g>
-        <g fill={colors.tealGlow}>
-          <circle cx="1050" cy="86" r="8" />
-          <circle cx="1063" cy="27" r="6" />
-          <circle cx="1086" cy="42" r="6.5" />
-          <circle cx="1121" cy="49" r="6" />
-          <circle cx="1140" cy="55" r="5.5" />
-        </g>
+        <FoilPack x={400} width={95} top={150} bottom={400} rotate={-7} clipId="packA" />
+        <FoilPack x={655} width={95} top={150} bottom={400} rotate={7} clipId="packC" />
+        <FoilPack x={522} width={112} top={88} bottom={400} rotate={0} clipId="packB" />
       </svg>
-      <Petals count={12} />
+      <Petals count={14} />
     </div>
   );
 }
@@ -523,24 +526,98 @@ function Eyebrow({ children, dark }) {
 }
 
 // ---------- Nav ----------
+// ---------- Icônes réseaux (dessins simplifiés maison, pas les logos officiels) ----------
+const socialIconProps = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" };
+
+function IconInstagram(props) {
+  return (
+    <svg {...socialIconProps} {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function IconTikTok(props) {
+  return (
+    <svg {...socialIconProps} {...props}>
+      <path d="M14 3v10.8a3.3 3.3 0 1 1-3.3-3.3" />
+      <path d="M14 3c0 2.6 2.1 4.7 4.7 4.7" />
+    </svg>
+  );
+}
+function IconDiscord(props) {
+  return (
+    <svg {...socialIconProps} {...props}>
+      <rect x="3" y="7.5" width="18" height="11" rx="5.5" />
+      <path d="M8 7.5c0-2.2 1.8-4 4-4s4 1.8 4 4" />
+      <circle cx="9" cy="13" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="13" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function IconVinted(props) {
+  return (
+    <svg {...socialIconProps} {...props}>
+      <path d="M4 4h9l7 7-9 9-7-7V4Z" />
+      <circle cx="8.3" cy="8.3" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function IconWhatnot(props) {
+  return (
+    <svg {...socialIconProps} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M10 8.3v7.4l6.2-3.7Z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function IconCardmarket(props) {
+  return (
+    <svg {...socialIconProps} {...props}>
+      <rect x="5" y="3" width="14" height="18" rx="2" />
+      <path d="M8.5 8h7M8.5 12h7M8.5 16h4" />
+    </svg>
+  );
+}
+
+const SOCIAL_LINKS = [
+  { name: "Instagram", Icon: IconInstagram, href: "#" },
+  { name: "TikTok", Icon: IconTikTok, href: "#" },
+  { name: "Discord", Icon: IconDiscord, href: "#" },
+  { name: "Vinted", Icon: IconVinted, href: "#" },
+  { name: "Whatnot", Icon: IconWhatnot, href: "#" },
+  { name: "Cardmarket", Icon: IconCardmarket, href: "#" },
+];
+
 function NavBar() {
-  const [open, setOpen] = useState(false);
   const { totalCount, setDrawerOpen } = useCart();
 
   return (
     <header className="sticky top-0 z-20 backdrop-blur border-b" style={{ backgroundColor: "rgba(245,241,230,0.88)", borderColor: "rgba(22,50,74,0.12)" }}>
-      <div className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-6 py-4">
-        <a href="#top" className="flex items-center gap-2 no-underline" style={{ ...display, fontStyle: "italic", fontWeight: 600, fontSize: "20px", color: colors.ink }}>
-          <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 shrink-0">
-            <path d="M12 3c3 2 5 6 3.5 10.5C14.5 16.8 12 18 12 21c0-3-2.5-4.2-3.5-7.5C7 9 9 5 12 3Z" fill={colors.goldBright} />
-          </svg>
-          DreamValley
-          <span style={{ fontStyle: "normal", color: colors.moss, fontSize: "14px" }}>TCG</span>
+      <div className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-6 py-3">
+        <a href="#top" className="flex items-center shrink-0">
+          {/* Remplace /logo.svg dans public/ par ton vrai logo quand il sera prêt */}
+          <img src="/logo.svg" alt="DreamValleyTCG" className="h-9 sm:h-10 w-auto" />
         </a>
 
-        <div className="flex items-center gap-3">
-          <button onClick={() => setDrawerOpen(true)} className="relative p-2 rounded-full" style={{ color: colors.ink }} aria-label="Ouvrir le panier">
-            <ShoppingBag size={22} />
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
+          {SOCIAL_LINKS.map(({ name, Icon, href }) => (
+            <a
+              key={name}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={name}
+              className="p-1.5 sm:p-2 rounded-full transition-colors"
+              style={{ color: colors.ink }}
+            >
+              <Icon width={18} height={18} />
+            </a>
+          ))}
+
+          <button onClick={() => setDrawerOpen(true)} className="relative p-2 rounded-full ml-1" style={{ color: colors.ink }} aria-label="Ouvrir le panier">
+            <ShoppingBag size={20} />
             {totalCount > 0 && (
               <span
                 className="absolute -top-1 -right-1 text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold"
@@ -550,28 +627,8 @@ function NavBar() {
               </span>
             )}
           </button>
-
-          <a
-            href="#communaute"
-            className="hidden sm:inline-flex items-center rounded-full px-4 py-2 text-xs no-underline"
-            style={{ ...mono, backgroundColor: colors.ink, color: colors.parchment, letterSpacing: "0.04em" }}
-          >
-            Rejoindre le Discord
-          </a>
-
-          <button onClick={() => setOpen(!open)} className="sm:hidden p-2 rounded-md" style={{ color: colors.ink }} aria-label="Ouvrir le menu">
-            {open ? <X size={22} /> : <Menu size={22} />}
-          </button>
         </div>
       </div>
-
-      {open && (
-        <div className="sm:hidden px-6 pb-4">
-          <a href="#communaute" onClick={() => setOpen(false)} className="block text-center rounded-full px-4 py-2 text-xs no-underline" style={{ ...mono, backgroundColor: colors.ink, color: colors.parchment }}>
-            Rejoindre le Discord
-          </a>
-        </div>
-      )}
     </header>
   );
 }
