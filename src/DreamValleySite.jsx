@@ -201,7 +201,7 @@ function HeroBanner() {
 // ---------- Produits ----------
 // La liste des produits vit maintenant côté serveur (KV) -- modifiable depuis /admin.
 
-function ProductImage({ images, className, onClick, zoomable = false }) {
+function ProductImage({ images, className, onClick, zoomable = false, alt = "" }) {
   const image = images && images.length > 0 ? images[0] : null;
   return (
     <div
@@ -212,7 +212,7 @@ function ProductImage({ images, className, onClick, zoomable = false }) {
       {image ? (
         <img
           src={image}
-          alt=""
+          alt={alt}
           className={`w-full h-full object-cover transition-transform duration-300 ${zoomable ? "group-hover:scale-105" : ""}`}
         />
       ) : (
@@ -598,7 +598,7 @@ function NavBar() {
       <div className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-6 py-3">
         <a href="#top" className="flex items-center shrink-0">
           {/* Remplace /logo.svg dans public/ par ton vrai logo quand il sera prêt */}
-          <img src="/favicon-logo.png" alt="DreamValleyTCG" className="h-9 sm:h-10 w-auto" />
+          <img src="/logo.svg" alt="DreamValleyTCG" className="h-9 sm:h-10 w-auto" />
         </a>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
@@ -664,7 +664,7 @@ function CartDrawer() {
           ) : (
             cartItems.map((item) => (
               <div key={item.id} className="flex items-center gap-3 py-4 border-b" style={{ borderColor: "rgba(22,50,74,0.08)" }}>
-                <ProductImage images={item.images} className="w-14 h-14 rounded-lg shrink-0" />
+                <ProductImage images={item.images} className="w-14 h-14 rounded-lg shrink-0" alt={item.name} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: colors.bark }}>{item.name}</p>
                   <p className="text-xs mt-0.5" style={{ ...mono, color: colors.moss }}>{item.price.toFixed(2)} €</p>
@@ -826,7 +826,7 @@ function CatalogueCard({ p, onOpenModal }) {
           onClick={() => onOpenModal(p)}
         >
           <div className="relative shrink-0">
-            <ProductImage images={p.images} className="w-full h-72 sm:h-80" zoomable />
+            <ProductImage images={p.images} className="w-full h-72 sm:h-80" zoomable alt={p.name} />
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -1316,7 +1316,7 @@ function AdminPage() {
           {products.map((p) => (
             <div key={p.id} className="flex items-center justify-between flex-wrap gap-3 p-5 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.1)" }}>
               <div className="flex items-center gap-3 min-w-0">
-                <ProductImage images={p.images} className="w-12 h-12 rounded-lg shrink-0" />
+                <ProductImage images={p.images} className="w-12 h-12 rounded-lg shrink-0" alt={p.name} />
                 <div className="min-w-0">
                   <p className="font-semibold truncate" style={{ color: colors.bark }}>{p.name}</p>
                   <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}{p.weight ? ` · ${p.weight} g` : ""}</p>
