@@ -657,24 +657,29 @@ function AdminPage() {
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center px-5" style={{ backgroundColor: colors.bark }}>
-        <form onSubmit={handleLogin} className="w-full max-w-sm p-8 rounded-2xl" style={{ backgroundColor: colors.parchment }}>
-          <div className="flex items-center gap-2 mb-6">
-            <Lock size={20} color={colors.ink} />
-            <h1 style={{ ...display, color: colors.bark, fontSize: "22px" }}>Administration</h1>
-          </div>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mot de passe"
-            className="w-full px-4 py-3 rounded-lg border mb-4"
-            style={{ borderColor: "rgba(22,50,74,0.2)", backgroundColor: "#fff" }}
-          />
-          {error && <p className="text-sm mb-4" style={{ color: "#b3413a" }}>{error}</p>}
-          <button type="submit" className="w-full rounded-full px-6 py-3 text-sm font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
-            Se connecter
-          </button>
-        </form>
+        <div className="w-full max-w-sm">
+          <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-4" style={{ color: colors.parchment, opacity: 0.7 }}>
+            <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
+          </a>
+          <form onSubmit={handleLogin} className="p-8 rounded-2xl" style={{ backgroundColor: colors.parchment }}>
+            <div className="flex items-center gap-2 mb-6">
+              <Lock size={20} color={colors.ink} />
+              <h1 style={{ ...display, color: colors.bark, fontSize: "22px" }}>Administration</h1>
+            </div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mot de passe"
+              className="w-full px-4 py-3 rounded-lg border mb-4"
+              style={{ borderColor: "rgba(22,50,74,0.2)", backgroundColor: "#fff" }}
+            />
+            {error && <p className="text-sm mb-4" style={{ color: "#b3413a" }}>{error}</p>}
+            <button type="submit" className="w-full rounded-full px-6 py-3 text-sm font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+              Se connecter
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
@@ -682,6 +687,9 @@ function AdminPage() {
   return (
     <div className="min-h-screen px-5 sm:px-6 py-12" style={{ backgroundColor: colors.parchment }}>
       <div className="max-w-2xl mx-auto">
+        <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-4" style={{ color: colors.ink, opacity: 0.65 }}>
+          <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
+        </a>
         <div className="flex items-center justify-between flex-wrap gap-3 mb-8">
           <h1 style={{ ...display, color: colors.bark, fontSize: "28px" }}>Catalogue & stock</h1>
           <button
@@ -697,7 +705,7 @@ function AdminPage() {
           <form onSubmit={handleAddProduct} className="mb-8 p-6 rounded-xl border space-y-3" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.15)" }}>
             <input placeholder="Nom du produit *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             <div className="flex gap-3 flex-wrap">
-              <input placeholder="Prix (ex: 12.90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+              <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
               <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             </div>
             <textarea placeholder="Description" value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
@@ -731,9 +739,15 @@ function AdminPage() {
         <div className="space-y-4">
           {products.map((p) => (
             <div key={p.id} className="flex items-center justify-between flex-wrap gap-3 p-5 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.1)" }}>
-              <div className="min-w-0">
-                <p className="font-semibold" style={{ color: colors.bark }}>{p.name}</p>
-                <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}</p>
+              <div className="flex items-center gap-3 min-w-0">
+                <ProductImage images={p.images} className="w-12 h-12 rounded-lg shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold truncate" style={{ color: colors.bark }}>{p.name}</p>
+                  <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: colors.moss }}>
+                    {p.images && p.images.length > 0 ? `${p.images.length} image(s) enregistrée(s)` : "Aucune image enregistrée"}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 {!p.soon && (
