@@ -229,87 +229,154 @@ function ProductImage({ images, className, onClick, zoomable = false }) {
   );
 }
 
-function ImageLightbox({ product, onClose }) {
+function ProductModal({ product, onClose }) {
   const [index, setIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const { cart, addToCart, removeFromCart, isOutOfStock, remainingStock } = useCart();
 
   useEffect(() => {
     setIndex(0);
+    setFlipped(false);
   }, [product]);
 
   if (!product) return null;
   const images = product.images && product.images.length > 0 ? product.images : [null];
   const hasMultiple = images.length > 1;
+  const outOfStock = !product.soon && isOutOfStock(product.id);
 
-  const prev = (e) => {
+  const prevImg = (e) => {
     e.stopPropagation();
     setIndex((i) => (i - 1 + images.length) % images.length);
   };
-  const next = (e) => {
+  const nextImg = (e) => {
     e.stopPropagation();
     setIndex((i) => (i + 1) % images.length);
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center p-5"
       style={{ backgroundColor: "rgba(13,27,42,0.85)" }}
       onClick={onClose}
     >
-      <div className="relative w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute -top-11 right-0 p-1" aria-label="Fermer">
+      <div
+        className="relative w-full max-w-md"
+        style={{ perspective: "1600px" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-11 right-0 p-1 z-10"
+          aria-label="Fermer"
+        >
           <X size={26} color={colors.parchment} />
         </button>
 
-        <div className="rounded-2xl overflow-hidden aspect-square flex items-center justify-center relative" style={{ backgroundColor: colors.parchmentSoft }}>
-          {images[index] ? (
-            <img src={images[index]} alt={product.name} className="w-full h-full object-contain" />
-          ) : (
-            <Leaf size={72} color={colors.moss} strokeWidth={1.2} />
-          )}
+        <div
+          className="relative w-full transition-transform duration-700"
+          style={{
+            aspectRatio: "3 / 4",
+            transformStyle: "preserve-3d",
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}
+        >
+          {/* ---- Face avant : visuel ---- */}
+          <div
+            className="absolute inset-0 rounded-2xl overflow-hidden border-2 flex flex-col"
+            style={{ backfaceVisibility: "hidden", borderColor: colors.goldBright, backgroundColor: colors.parchmentSoft }}
+          >
+            <div className="relative flex-1">
+              {images[index] ? (
+                <img src={images[index]} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Leaf size={64} color={colors.moss} strokeWidth={1.2} />
+                </div>
+              )}
 
-          {hasMultiple && (
-            <>
-              <button
-                onClick={prev}
-                aria-label="Image précédente"
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "rgba(13,27,42,0.6)" }}
-              >
-                <ArrowRight size={16} color={colors.parchment} style={{ transform: "rotate(180deg)" }} />
-              </button>
-              <button
-                onClick={next}
-                aria-label="Image suivante"
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "rgba(13,27,42,0.6)" }}
-              >
-                <ArrowRight size={16} color={colors.parchment} />
-              </button>
-            </>
-          )}
-        </div>
+              {hasMultiple && (
+                <>
+                  <button onClick={prevImg} aria-label="Image précédente" className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(13,27,42,0.6)" }}>
+                    <ArrowRight size={14} color={colors.parchment} style={{ transform: "rotate(180deg)" }} />
+                  </button>
+                  <button onClick={nextImg} aria-label="Image suivante" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(13,27,42,0.6)" }}>
+                    <ArrowRight size={14} color={colors.parchment} />
+                  </button>
+                  <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                    {images.map((_, i) => (
+                      <span key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: i === index ? colors.goldBright : "rgba(245,241,230,0.5)" }} />
+                    ))}
+                  </div>
+                </>
+              )}
 
-        {hasMultiple && (
-          <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
-            {images.map((img, i) => (
+              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px]" style={{ ...mono, backgroundColor: "rgba(13,27,42,0.7)", color: colors.tealGlow, letterSpacing: "0.06em" }}>
+                {product.tag}
+              </div>
+            </div>
+
+            <div className="p-5" style={{ backgroundColor: colors.parchment }}>
+              <p style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
               <button
-                key={i}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIndex(i);
-                }}
-                className="w-12 h-12 rounded-lg overflow-hidden border-2 flex items-center justify-center shrink-0"
-                style={{ borderColor: i === index ? colors.goldBright : "transparent", backgroundColor: colors.parchmentSoft }}
+                onClick={() => setFlipped(true)}
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold underline"
+                style={{ color: colors.moss }}
               >
-                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Leaf size={16} color={colors.moss} />}
+                Voir les détails →
               </button>
-            ))}
+            </div>
           </div>
-        )}
 
-        <p className="mt-3 text-center px-2" style={{ ...display, color: colors.parchment, fontSize: "18px" }}>
-          {product.name}
-        </p>
+          {/* ---- Face arrière : détails ---- */}
+          <div
+            className="absolute inset-0 rounded-2xl overflow-hidden border-2 flex flex-col"
+            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", borderColor: colors.goldBright, backgroundColor: colors.parchment }}
+          >
+            <div className="flex-1 overflow-y-auto p-6">
+              <span className="text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{product.tag}</span>
+              <h3 className="mt-1.5" style={{ ...display, color: colors.bark, fontSize: "22px" }}>{product.name}</h3>
+              <p className="mt-3 text-sm leading-relaxed" style={{ color: colors.ink, opacity: 0.78 }}>{product.text}</p>
+
+              {product.specs && product.specs.length > 0 && (
+                <ul className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "rgba(22,50,74,0.1)" }}>
+                  {product.specs.map((s) => (
+                    <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
+                      <span style={{ ...mono, color: colors.moss, letterSpacing: "0.03em" }}>{s.label}</span>
+                      <span style={{ color: colors.ink, opacity: 0.85, textAlign: "right" }}>{s.value}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <button
+                onClick={() => setFlipped(false)}
+                className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold underline"
+                style={{ color: colors.moss }}
+              >
+                ← Revoir le visuel
+              </button>
+            </div>
+
+            {!product.soon && (
+              <div className="p-5 border-t flex items-center justify-between gap-3" style={{ borderColor: "rgba(22,50,74,0.12)", backgroundColor: colors.parchmentSoft }}>
+                <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "20px" }}>{Number(product.price).toFixed(2)} €</span>
+                {outOfStock ? (
+                  <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
+                ) : cart[product.id] ? (
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => removeFromCart(product.id)} className="w-8 h-8 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
+                    <span style={mono}>{cart[product.id]}</span>
+                    <button onClick={() => addToCart(product.id)} disabled={remainingStock(product.id) <= 0} className="w-8 h-8 rounded-full border font-bold disabled:opacity-40" style={{ borderColor: colors.ink, color: colors.ink }}>+</button>
+                  </div>
+                ) : (
+                  <button onClick={() => addToCart(product.id)} className="rounded-full px-5 py-2.5 text-sm font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+                    Ajouter au panier
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -604,7 +671,7 @@ function Principles() {
 
 function Catalogue() {
   const { cart, addToCart, removeFromCart, isOutOfStock, remainingStock, products } = useCart();
-  const [zoomProduct, setZoomProduct] = useState(null);
+  const [activeProduct, setActiveProduct] = useState(null);
 
   return (
     <section id="catalogue" className="py-16 sm:py-20" style={{ backgroundColor: colors.parchmentSoft }}>
@@ -625,8 +692,12 @@ function Catalogue() {
             const outOfStock = !p.soon && isOutOfStock(p.id);
             return (
               <Reveal key={p.id} delay={(i % 3) * 100}>
-                <div className="rounded-2xl border flex flex-col overflow-hidden h-full transition-shadow hover:shadow-lg" style={{ backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}>
-                  <ProductImage images={p.images} className="w-full h-44 sm:h-40" onClick={() => setZoomProduct(p)} zoomable />
+                <div
+                  onClick={() => setActiveProduct(p)}
+                  className="rounded-2xl border flex flex-col overflow-hidden h-full cursor-pointer transition-shadow hover:shadow-lg"
+                  style={{ backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}
+                >
+                  <ProductImage images={p.images} className="w-full h-44 sm:h-40" zoomable />
                   <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
                   <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
                   <p className="px-6 pt-2 text-sm" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
@@ -649,7 +720,7 @@ function Catalogue() {
                       En préparation
                     </span>
                   ) : (
-                    <div className="px-6 pb-6 pt-4 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="px-6 pb-6 pt-4 flex items-center justify-between gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
                       <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "18px" }}>{p.price.toFixed(2)} €</span>
                       {outOfStock ? (
                         <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
@@ -680,7 +751,7 @@ function Catalogue() {
         </div>
       </div>
 
-      <ImageLightbox product={zoomProduct} onClose={() => setZoomProduct(null)} />
+      <ProductModal product={activeProduct} onClose={() => setActiveProduct(null)} />
     </section>
   );
 }
