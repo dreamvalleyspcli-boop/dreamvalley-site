@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
@@ -747,7 +747,7 @@ function Catalogue() {
                   className="rounded-2xl border flex flex-col overflow-hidden h-full cursor-pointer transition-shadow hover:shadow-lg"
                   style={{ backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}
                 >
-                  <ProductImage images={p.images} className="w-full h-44 sm:h-40" zoomable />
+                  <ProductImage images={p.images} className="w-full aspect-[3/4]" zoomable />
                   <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
                   <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
                   <p className="px-6 pt-2 text-sm" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
@@ -873,7 +873,29 @@ function AdminPage() {
   const [addError, setAddError] = useState("");
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({ name: "", price: "", tag: "", text: "", imagesText: "", specsText: "", soon: false });
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [form, setForm] = useState({ name: "", price: "", tag: "", text: "", images: [], specsText: "", soon: false });
+
+  function moveImage(index, direction) {
+    setForm((f) => {
+      const images = [...f.images];
+      const target = index + direction;
+      if (target < 0 || target >= images.length) return f;
+      [images[index], images[target]] = [images[target], images[index]];
+      return { ...f, images };
+    });
+  }
+
+  function removeImage(index) {
+    setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
+  }
+
+  function addImageUrl() {
+    const url = newImageUrl.trim();
+    if (!url) return;
+    setForm((f) => ({ ...f, images: [...f.images, url] }));
+    setNewImageUrl("");
+  }
 
   async function handleFileUpload(e) {
     const files = Array.from(e.target.files || []);
@@ -890,10 +912,7 @@ function AdminPage() {
       });
       const data = await res.json();
       if (data.urls) {
-        setForm((f) => ({
-          ...f,
-          imagesText: [f.imagesText, ...data.urls].filter(Boolean).join("\n"),
-        }));
+        setForm((f) => ({ ...f, images: [...f.images, ...data.urls] }));
         if (data.skipped && data.skipped.length > 0) {
           setAddError(`Ignorés : ${data.skipped.join(", ")}`);
         }
@@ -914,7 +933,7 @@ function AdminPage() {
       price: p.soon ? "" : String(p.price ?? ""),
       tag: p.tag || "",
       text: p.text || "",
-      imagesText: (p.images || []).join("\n"),
+      images: [...(p.images || [])],
       specsText: (p.specs || []).map((s) => `${s.label}: ${s.value}`).join("\n"),
       soon: !!p.soon,
     });
@@ -924,7 +943,7 @@ function AdminPage() {
   }
 
   function resetForm() {
-    setForm({ name: "", price: "", tag: "", text: "", imagesText: "", specsText: "", soon: false });
+    setForm({ name: "", price: "", tag: "", text: "", images: [], specsText: "", soon: false });
     setEditingId(null);
     setAddError("");
   }
@@ -987,18 +1006,13 @@ function AdminPage() {
         .filter((parts) => parts.length >= 2 && parts[0].trim())
         .map(([label, ...rest]) => ({ label: label.trim(), value: rest.join(":").trim() }));
 
-      const images = form.imagesText
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean);
-
       const endpoint = editingId ? "/api/admin/products/edit" : "/api/admin/products/add";
       const payload = {
         name: form.name.trim(),
         price: form.price,
         tag: form.tag.trim(),
         text: form.text.trim(),
-        images,
+        images: form.images,
         specs,
         soon: form.soon,
       };
@@ -1106,28 +1120,64 @@ function AdminPage() {
               <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             </div>
             <textarea placeholder="Description" value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+
             <div>
               <label className="text-xs font-semibold block mb-1.5" style={{ color: colors.ink }}>
-                Importer des photos depuis ton ordinateur
+                Photos ({form.images.length}) — la première sera l'image principale
               </label>
+
+              {form.images.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {form.images.map((url, i) => (
+                    <div key={`${url}-${i}`} className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.15)", backgroundColor: colors.parchment }}>
+                      <div className="w-12 h-12 rounded-md overflow-hidden shrink-0" style={{ backgroundColor: colors.parchmentSoft }}>
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs flex-1 truncate" style={{ ...mono, color: colors.moss }}>{url}</span>
+                      <button type="button" onClick={() => moveImage(i, -1)} disabled={i === 0} className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30" style={{ color: colors.ink }} aria-label="Monter">
+                        <ChevronUp size={16} />
+                      </button>
+                      <button type="button" onClick={() => moveImage(i, 1)} disabled={i === form.images.length - 1} className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30" style={{ color: colors.ink }} aria-label="Descendre">
+                        <ChevronDown size={16} />
+                      </button>
+                      <button type="button" onClick={() => removeImage(i)} className="w-6 h-6 rounded flex items-center justify-center" style={{ color: "#b3413a" }} aria-label="Retirer">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <input
                 type="file"
                 accept="image/*"
                 multiple
                 onChange={handleFileUpload}
                 disabled={uploading}
-                className="w-full text-sm"
+                className="w-full text-sm mb-2"
               />
-              {uploading && <p className="text-xs mt-1.5" style={{ color: colors.moss }}>Envoi en cours...</p>}
+              {uploading && <p className="text-xs mb-2" style={{ color: colors.moss }}>Envoi en cours...</p>}
+
+              <div className="flex gap-2">
+                <input
+                  placeholder="Ou colle une URL d'image directe"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addImageUrl();
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 rounded-lg border text-sm"
+                  style={{ borderColor: "rgba(22,50,74,0.2)" }}
+                />
+                <button type="button" onClick={addImageUrl} className="rounded-lg px-3 py-2 text-xs font-semibold" style={{ backgroundColor: colors.parchmentSoft, color: colors.ink, border: "1px solid rgba(22,50,74,0.2)" }}>
+                  Ajouter
+                </button>
+              </div>
             </div>
-            <textarea
-              placeholder={"URLs des images (rempli automatiquement après import, ou colle des liens directs ici)"}
-              value={form.imagesText}
-              onChange={(e) => setForm({ ...form, imagesText: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 rounded-lg border"
-              style={{ borderColor: "rgba(22,50,74,0.2)" }}
-            />
+
             <textarea
               placeholder={"Caractéristiques, une par ligne : Label: Valeur\nex: Langue: Français"}
               value={form.specsText}
