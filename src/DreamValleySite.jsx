@@ -387,11 +387,26 @@ const CartContext = createContext(null);
 const useCart = () => useContext(CartContext);
 
 function CartProvider({ children }) {
-  const [cart, setCart] = useState({});
+  const [cart, setCart] = useState(() => {
+    try {
+      const saved = localStorage.getItem("dv_cart");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [stock, setStock] = useState({});
   const [products, setProducts] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [status, setStatus] = useState("idle");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("dv_cart", JSON.stringify(cart));
+    } catch {
+      // stockage indisponible (navigation privée stricte, etc.) -- on continue sans persistance
+    }
+  }, [cart]);
 
   useEffect(() => {
     fetch(`${CHECKOUT_API_URL}/api/stock`).then((r) => r.json()).then(setStock).catch(() => {});
@@ -1245,6 +1260,14 @@ function LegalPage() {
 }
 
 function SuccessPage() {
+  useEffect(() => {
+    try {
+      localStorage.removeItem("dv_cart");
+    } catch {
+      // rien à faire si le stockage est indisponible
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: colors.parchment }}>
       <div className="max-w-md text-center">
