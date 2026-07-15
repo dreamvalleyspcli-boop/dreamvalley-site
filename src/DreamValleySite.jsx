@@ -727,8 +727,112 @@ function Principles() {
   );
 }
 
+function CatalogueCard({ p, onOpenModal }) {
+  const { cart, addToCart, removeFromCart, isOutOfStock, remainingStock } = useCart();
+  const [flipped, setFlipped] = useState(false);
+  const outOfStock = !p.soon && isOutOfStock(p.id);
+
+  const CartControls = ({ size = "normal" }) =>
+    p.soon ? (
+      <span className="w-fit rounded-md border border-dashed px-2.5 py-1 text-[11px]" style={{ ...mono, color: colors.moss, borderColor: colors.moss }}>
+        En préparation
+      </span>
+    ) : (
+      <div className="flex items-center justify-between gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
+        <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: size === "small" ? "16px" : "18px" }}>{p.price.toFixed(2)} €</span>
+        {outOfStock ? (
+          <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
+        ) : cart[p.id] ? (
+          <div className="flex items-center gap-3">
+            <button onClick={() => removeFromCart(p.id)} className="w-7 h-7 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
+            <span style={mono}>{cart[p.id]}</span>
+            <button onClick={() => addToCart(p.id)} disabled={remainingStock(p.id) <= 0} className="w-7 h-7 rounded-full border font-bold disabled:opacity-40" style={{ borderColor: colors.ink, color: colors.ink }}>+</button>
+          </div>
+        ) : (
+          <button onClick={() => addToCart(p.id)} className="rounded-full px-4 py-2 text-xs font-semibold transition-transform hover:-translate-y-0.5" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+            Ajouter au panier
+          </button>
+        )}
+      </div>
+    );
+
+  return (
+    <div className="relative h-full" style={{ perspective: "1500px" }}>
+      <div
+        className="relative w-full h-full transition-transform duration-700"
+        style={{ minHeight: "500px", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
+        {/* Face avant -- aperçu */}
+        <div
+          className="absolute inset-0 rounded-2xl border flex flex-col overflow-hidden cursor-pointer transition-shadow hover:shadow-lg"
+          style={{ backfaceVisibility: "hidden", backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}
+          onClick={() => onOpenModal(p)}
+        >
+          <div className="relative">
+            <ProductImage images={p.images} className="w-full aspect-[3/4]" zoomable />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setFlipped(true);
+              }}
+              className="absolute top-3 right-3 z-10 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md"
+              style={{ backgroundColor: "rgba(13,27,42,0.75)", color: colors.parchment }}
+            >
+              Voir détails
+            </button>
+          </div>
+          <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
+          <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
+          <p className="px-6 pt-2 text-sm line-clamp-3 whitespace-pre-line" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
+
+          <div className="flex-1" />
+
+          <div className="px-6 pb-6 pt-4">
+            <CartControls />
+          </div>
+        </div>
+
+        {/* Face arrière -- détails complets */}
+        <div
+          className="absolute inset-0 rounded-2xl border flex flex-col overflow-hidden"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", backgroundColor: colors.parchment, borderColor: colors.goldBright }}
+        >
+          <button
+            onClick={() => setFlipped(false)}
+            className="absolute top-3 right-3 z-10 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md"
+            style={{ backgroundColor: colors.ink, color: colors.parchment }}
+          >
+            ← Retour
+          </button>
+
+          <div className="flex-1 overflow-y-auto p-6 pr-24">
+            <span className="text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
+            <h3 className="mt-1.5" style={{ ...display, color: colors.bark, fontSize: "20px" }}>{p.name}</h3>
+            <p className="mt-3 text-sm leading-relaxed whitespace-pre-line" style={{ color: colors.ink, opacity: 0.8 }}>{p.text}</p>
+
+            {p.specs && p.specs.length > 0 && (
+              <ul className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "rgba(22,50,74,0.1)" }}>
+                {p.specs.map((s) => (
+                  <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
+                    <span style={{ ...mono, color: colors.moss, letterSpacing: "0.03em" }}>{s.label}</span>
+                    <span style={{ color: colors.ink, opacity: 0.85, textAlign: "right" }}>{s.value}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="p-5 border-t" style={{ borderColor: "rgba(22,50,74,0.12)", backgroundColor: colors.parchmentSoft }}>
+            <CartControls size="small" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Catalogue() {
-  const { cart, addToCart, removeFromCart, isOutOfStock, remainingStock, products } = useCart();
+  const { products } = useCart();
   const [activeProduct, setActiveProduct] = useState(null);
 
   return (
@@ -746,66 +850,11 @@ function Catalogue() {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {products.map((p, i) => {
-            const outOfStock = !p.soon && isOutOfStock(p.id);
-            return (
-              <Reveal key={p.id} delay={(i % 3) * 100}>
-                <div
-                  onClick={() => setActiveProduct(p)}
-                  className="rounded-2xl border flex flex-col overflow-hidden h-full cursor-pointer transition-shadow hover:shadow-lg"
-                  style={{ backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}
-                >
-                  <ProductImage images={p.images} className="w-full aspect-[3/4]" zoomable />
-                  <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
-                  <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
-                  <p className="px-6 pt-2 text-sm line-clamp-3 whitespace-pre-line" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
-
-                  {p.specs && p.specs.length > 0 && (
-                    <ul className="px-6 pt-3 space-y-1.5">
-                      {p.specs.map((s) => (
-                        <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
-                          <span style={{ ...mono, color: colors.moss, letterSpacing: "0.03em" }}>{s.label}</span>
-                          <span style={{ color: colors.ink, opacity: 0.8, textAlign: "right" }}>{s.value}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <div className="flex-1" />
-
-                  {p.soon ? (
-                    <span className="mx-6 mt-4 mb-5 w-fit rounded-md border border-dashed px-2.5 py-1 text-[11px]" style={{ ...mono, color: colors.moss, borderColor: colors.moss }}>
-                      En préparation
-                    </span>
-                  ) : (
-                    <div className="px-6 pb-6 pt-4 flex items-center justify-between gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                      <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "18px" }}>{p.price.toFixed(2)} €</span>
-                      {outOfStock ? (
-                        <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
-                      ) : cart[p.id] ? (
-                        <div className="flex items-center gap-3">
-                          <button onClick={() => removeFromCart(p.id)} className="w-7 h-7 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
-                          <span style={mono}>{cart[p.id]}</span>
-                          <button
-                            onClick={() => addToCart(p.id)}
-                            disabled={remainingStock(p.id) <= 0}
-                            className="w-7 h-7 rounded-full border font-bold disabled:opacity-40"
-                            style={{ borderColor: colors.ink, color: colors.ink }}
-                          >
-                            +
-                          </button>
-                        </div>
-                      ) : (
-                        <button onClick={() => addToCart(p.id)} className="rounded-full px-4 py-2 text-xs font-semibold transition-transform hover:-translate-y-0.5" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
-                          Ajouter au panier
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </Reveal>
-            );
-          })}
+          {products.map((p, i) => (
+            <Reveal key={p.id} delay={(i % 3) * 100}>
+              <CatalogueCard p={p} onOpenModal={setActiveProduct} />
+            </Reveal>
+          ))}
         </div>
       </div>
 
