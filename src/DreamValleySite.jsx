@@ -573,6 +573,9 @@ function AdminPage() {
           ...f,
           imagesText: [f.imagesText, ...data.urls].filter(Boolean).join("\n"),
         }));
+        if (data.skipped && data.skipped.length > 0) {
+          setAddError(`Ignorés : ${data.skipped.join(", ")}`);
+        }
       } else {
         setAddError(data.error || "Échec de l'envoi des images");
       }
