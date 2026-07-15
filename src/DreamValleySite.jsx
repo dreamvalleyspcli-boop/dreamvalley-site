@@ -543,9 +543,31 @@ function AdminPage() {
   const [saving, setSaving] = useState({});
   const [deleting, setDeleting] = useState({});
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [addError, setAddError] = useState("");
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: "", price: "", tag: "", text: "", imagesText: "", specsText: "", soon: false });
+
+  function startEdit(p) {
+    setForm({
+      name: p.name || "",
+      price: p.soon ? "" : String(p.price ?? ""),
+      tag: p.tag || "",
+      text: p.text || "",
+      imagesText: (p.images || []).join("\n"),
+      specsText: (p.specs || []).map((s) => `${s.label}: ${s.value}`).join("\n"),
+      soon: !!p.soon,
+    });
+    setEditingId(p.id);
+    setAddError("");
+    setShowAddForm(true);
+  }
+
+  function resetForm() {
+    setForm({ name: "", price: "", tag: "", text: "", imagesText: "", specsText: "", soon: false });
+    setEditingId(null);
+    setAddError("");
+  }
 
   useEffect(() => {
     if (token) {
@@ -590,7 +612,7 @@ function AdminPage() {
     }
   }
 
-  async function handleAddProduct(e) {
+  async function handleSubmitProduct(e) {
     e.preventDefault();
     setAddError("");
     if (!form.name.trim()) {
@@ -610,26 +632,30 @@ function AdminPage() {
         .map((line) => line.trim())
         .filter(Boolean);
 
-      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/products/add`, {
+      const endpoint = editingId ? "/api/admin/products/edit" : "/api/admin/products/add";
+      const payload = {
+        name: form.name.trim(),
+        price: form.price,
+        tag: form.tag.trim(),
+        text: form.text.trim(),
+        images,
+        specs,
+        soon: form.soon,
+      };
+      if (editingId) payload.id = editingId;
+
+      const res = await fetch(`${CHECKOUT_API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          price: form.price,
-          tag: form.tag.trim(),
-          text: form.text.trim(),
-          images,
-          specs,
-          soon: form.soon,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (Array.isArray(data)) {
         setProducts(data);
-        setForm({ name: "", price: "", tag: "", text: "", imagesText: "", specsText: "", soon: false });
+        resetForm();
         setShowAddForm(false);
       } else {
-        setAddError(data.error || "Erreur lors de l'ajout");
+        setAddError(data.error || "Erreur lors de l'enregistrement");
       }
     } catch {
       setAddError("Erreur de connexion au serveur");
@@ -693,7 +719,15 @@ function AdminPage() {
         <div className="flex items-center justify-between flex-wrap gap-3 mb-8">
           <h1 style={{ ...display, color: colors.bark, fontSize: "28px" }}>Catalogue & stock</h1>
           <button
-            onClick={() => setShowAddForm((v) => !v)}
+            onClick={() => {
+              if (showAddForm) {
+                setShowAddForm(false);
+                resetForm();
+              } else {
+                resetForm();
+                setShowAddForm(true);
+              }
+            }}
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold"
             style={{ backgroundColor: colors.ink, color: colors.parchment }}
           >
@@ -702,7 +736,10 @@ function AdminPage() {
         </div>
 
         {showAddForm && (
-          <form onSubmit={handleAddProduct} className="mb-8 p-6 rounded-xl border space-y-3" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.15)" }}>
+          <form onSubmit={handleSubmitProduct} className="mb-8 p-6 rounded-xl border space-y-3" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.15)" }}>
+            <p className="text-sm font-semibold" style={{ color: colors.bark }}>
+              {editingId ? "Modifier le produit" : "Nouveau produit"}
+            </p>
             <input placeholder="Nom du produit *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             <div className="flex gap-3 flex-wrap">
               <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
@@ -731,7 +768,7 @@ function AdminPage() {
             </label>
             {addError && <p className="text-sm" style={{ color: "#b3413a" }}>{addError}</p>}
             <button type="submit" disabled={adding} className="rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
-              {adding ? "Ajout..." : "Créer le produit"}
+              {adding ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Créer le produit"}
             </button>
           </form>
         )}
@@ -771,6 +808,13 @@ function AdminPage() {
                     </button>
                   </>
                 )}
+                <button
+                  onClick={() => startEdit(p)}
+                  className="rounded-full px-4 py-2 text-xs font-semibold border"
+                  style={{ borderColor: colors.ink, color: colors.ink }}
+                >
+                  Modifier
+                </button>
                 <button
                   onClick={() => handleDeleteProduct(p.id)}
                   disabled={deleting[p.id]}
