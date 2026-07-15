@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
+import React, { useState, useEffect, createContext, useContext, useRef } from "react";
 import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
@@ -6,7 +6,6 @@ import "@fontsource/fraunces/700.css";
 import "@fontsource/fraunces/500-italic.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
-
 
 const CHECKOUT_API_URL = "https://dreamvalley-api.dreamvalleyspcli.workers.dev";
 
@@ -25,9 +24,179 @@ const colors = {
 const display = { fontFamily: "'Fraunces', serif" };
 const mono = { fontFamily: "'JetBrains Mono', monospace" };
 
+// ---------- Animation globale ----------
+function GlobalMotionStyles() {
+  return (
+    <style>{`
+      @keyframes dv-fall {
+        0% { transform: translate(0,-10px) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.85; }
+        100% { transform: translate(var(--dx,20px), 340px) rotate(200deg); opacity: 0; }
+      }
+      @keyframes dv-river-flow {
+        to { stroke-dashoffset: -200; }
+      }
+      @keyframes dv-twinkle {
+        0%, 100% { opacity: 0.25; }
+        50% { opacity: 0.9; }
+      }
+      .dv-petal { animation: dv-fall linear infinite; }
+      .dv-river-anim { animation: dv-river-flow 6s linear infinite; }
+      .dv-star { animation: dv-twinkle 3s ease-in-out infinite; }
+      .dv-reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+      .dv-reveal.dv-in { opacity: 1; transform: translateY(0); }
+      @media (prefers-reduced-motion: reduce) {
+        .dv-petal, .dv-river-anim, .dv-star { animation: none !important; }
+        .dv-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+      }
+    `}</style>
+  );
+}
+
+// ---------- Révélation au scroll ----------
+function Reveal({ children, delay = 0, className = "" }) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className={`dv-reveal ${inView ? "dv-in" : ""} ${className}`} style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  );
+}
+
+// ---------- Pétales flottants (décoratif) ----------
+function Petals({ count = 10 }) {
+  const petals = React.useMemo(
+    () =>
+      Array.from({ length: count }).map((_, i) => ({
+        left: `${(i * 97) % 100}%`,
+        size: 6 + ((i * 13) % 8),
+        duration: 9 + ((i * 7) % 6),
+        delay: -(i * 2.3),
+        dx: `${((i % 5) - 2) * 18}px`,
+      })),
+    [count]
+  );
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      {petals.map((p, i) => (
+        <span
+          key={i}
+          className="dv-petal absolute rounded-full"
+          style={{
+            left: p.left,
+            top: "-10px",
+            width: p.size,
+            height: p.size * 0.7,
+            backgroundColor: colors.tealGlow,
+            opacity: 0.7,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+            "--dx": p.dx,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ---------- Bannière illustrée (originale, nuit/torii/cerisiers) ----------
+function HeroBanner() {
+  return (
+    <div className="relative w-full overflow-hidden rounded-2xl" style={{ height: "clamp(220px,32vw,340px)", backgroundColor: colors.bark }}>
+      <svg viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" className="absolute inset-0 w-full h-full" aria-hidden="true">
+        <defs>
+          <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#f3ead0" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#f3ead0" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        <rect x="0" y="0" width="1200" height="400" fill={colors.bark} />
+        <circle cx="620" cy="130" r="150" fill="url(#moonGlow)" />
+        <circle cx="620" cy="130" r="70" fill="#efe6cf" />
+        <circle cx="645" cy="105" r="7" fill="#d8cfae" opacity="0.5" />
+        <circle cx="600" cy="150" r="5" fill="#d8cfae" opacity="0.5" />
+
+        {[...Array(18)].map((_, i) => (
+          <circle
+            key={i}
+            className="dv-star"
+            cx={(i * 137) % 1200}
+            cy={20 + ((i * 53) % 160)}
+            r={i % 3 === 0 ? 1.6 : 1}
+            fill="#e8dfc4"
+            style={{ animationDelay: `${(i % 5) * 0.6}s` }}
+          />
+        ))}
+
+        <path d="M0 300 C 200 260, 340 320, 520 285 C 700 250, 820 300, 1000 270 C 1080 258, 1150 268, 1200 275 L1200 400 L0 400 Z" fill="#132c42" />
+        <path d="M0 340 C 220 315, 380 355, 560 335 C 760 312, 900 350, 1200 330 L1200 400 L0 400 Z" fill="#0f2233" />
+
+        <g fill="#173a2c" opacity="0.9">
+          <path d="M90 340 L130 260 L170 340 Z" />
+          <path d="M150 350 L185 285 L220 350 Z" />
+          <path d="M980 345 L1020 270 L1060 345 Z" />
+          <path d="M1040 352 L1075 292 L1110 352 Z" />
+        </g>
+
+        <path d="M470 340 C 520 320 680 320 730 340 C 690 375 660 400 600 400 C 540 400 510 375 470 340 Z" fill={colors.tealGlow} opacity="0.55" />
+
+        <g stroke="#241407" strokeWidth="9" fill="none" strokeLinecap="round">
+          <line x1="545" y1="330" x2="545" y2="392" />
+          <line x1="655" y1="330" x2="655" y2="392" />
+          <line x1="530" y1="338" x2="670" y2="338" />
+          <line x1="536" y1="356" x2="664" y2="356" />
+        </g>
+
+        <g stroke="#5a3420" strokeWidth="3.5" fill="none" opacity="0.9">
+          <path d="M60 60 C 100 40 130 55 150 90" />
+          <path d="M100 55 C 118 50 130 42 138 30" />
+        </g>
+        <g fill={colors.tealGlow}>
+          <circle cx="150" cy="90" r="8" />
+          <circle cx="138" cy="30" r="6" />
+          <circle cx="115" cy="45" r="6.5" />
+          <circle cx="80" cy="52" r="6" />
+          <circle cx="60" cy="60" r="5.5" />
+        </g>
+
+        <g stroke="#5a3420" strokeWidth="3.5" fill="none" opacity="0.9">
+          <path d="M1140 55 C 1100 38 1070 52 1050 86" />
+          <path d="M1100 50 C 1082 46 1070 38 1063 27" />
+        </g>
+        <g fill={colors.tealGlow}>
+          <circle cx="1050" cy="86" r="8" />
+          <circle cx="1063" cy="27" r="6" />
+          <circle cx="1086" cy="42" r="6.5" />
+          <circle cx="1121" cy="49" r="6" />
+          <circle cx="1140" cy="55" r="5.5" />
+        </g>
+      </svg>
+      <Petals count={12} />
+    </div>
+  );
+}
+
 // ---------- Produits ----------
 // La liste des produits vit maintenant côté serveur (KV) -- modifiable depuis /admin.
-// Ce composant se contente de l'afficher, plus besoin de toucher au code pour ajouter/retirer un article.
 
 function ProductImage({ images, className, onClick, zoomable = false }) {
   const image = images && images.length > 0 ? images[0] : null;
@@ -166,7 +335,7 @@ function CartProvider({ children }) {
     setCart((c) => {
       const current = c[id] || 0;
       const max = stock[id];
-      if (typeof max === "number" && current >= max) return c; // stock atteint, on bloque
+      if (typeof max === "number" && current >= max) return c;
       return { ...c, [id]: current + 1 };
     });
   };
@@ -367,26 +536,38 @@ function CartDrawer() {
 function Hero() {
   return (
     <section className="relative overflow-hidden pt-16 sm:pt-24 pb-14 sm:pb-20">
-      <svg viewBox="0 0 1120 420" preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 w-full h-full opacity-50 pointer-events-none">
-        <path d="M-20 40 C 180 90, 120 180, 320 210 S 560 300, 480 360 S 780 400, 1140 380" stroke={colors.tealGlow} strokeWidth="3" fill="none" strokeLinecap="round" />
+      <svg viewBox="0 0 1120 420" preserveAspectRatio="none" aria-hidden="true" className="absolute inset-0 w-full h-full opacity-40 pointer-events-none">
+        <path className="dv-river-anim" d="M-20 40 C 180 90, 120 180, 320 210 S 560 300, 480 360 S 780 400, 1140 380" stroke={colors.tealGlow} strokeWidth="3" fill="none" strokeLinecap="round" strokeDasharray="10 14" />
         <path d="M-20 40 C 180 90, 120 180, 320 210 S 560 300, 480 360 S 780 400, 1140 380" stroke={colors.gold} strokeWidth="1" fill="none" strokeDasharray="1 10" strokeLinecap="round" />
       </svg>
       <div className="relative max-w-6xl mx-auto px-5 sm:px-6">
-        <Eyebrow>DreamValleyTCG — Revendeur indépendant</Eyebrow>
-        <h1 className="mt-4 max-w-xl" style={{ ...display, fontWeight: 600, fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.08, color: colors.bark }}>
-          Chaque produit a une histoire <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>avant</span> d'arriver chez vous.
-        </h1>
-        <p className="mt-5 max-w-md text-lg" style={{ color: colors.ink, opacity: 0.85 }}>
-          Nous sélectionnons et vérifions des produits Pokémon TCG scellés, pour que chaque commande soit une découverte — jamais un pari.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a href="#catalogue" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
-            Voir le catalogue
-          </a>
-          <a href="#communaute" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline border-2" style={{ borderColor: colors.ink, color: colors.ink }}>
-            Rejoindre le Discord
-          </a>
-        </div>
+        <Reveal>
+          <HeroBanner />
+        </Reveal>
+
+        <Reveal delay={100}>
+          <Eyebrow>DreamValleyTCG — Revendeur indépendant</Eyebrow>
+        </Reveal>
+        <Reveal delay={180}>
+          <h1 className="mt-4 max-w-xl" style={{ ...display, fontWeight: 600, fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.08, color: colors.bark }}>
+            Chaque produit a une histoire <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>avant</span> d'arriver chez vous.
+          </h1>
+        </Reveal>
+        <Reveal delay={260}>
+          <p className="mt-5 max-w-md text-lg" style={{ color: colors.ink, opacity: 0.85 }}>
+            Nous sélectionnons et vérifions des produits Pokémon TCG scellés, pour que chaque commande soit une découverte — jamais un pari.
+          </p>
+        </Reveal>
+        <Reveal delay={340}>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href="#catalogue" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline transition-transform hover:-translate-y-0.5" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+              Voir le catalogue
+            </a>
+            <a href="#communaute" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline border-2 transition-transform hover:-translate-y-0.5" style={{ borderColor: colors.ink, color: colors.ink }}>
+              Rejoindre le Discord
+            </a>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -400,17 +581,21 @@ function Principles() {
   ];
   return (
     <section className="max-w-6xl mx-auto px-5 sm:px-6 py-16 sm:py-20">
-      <div className="max-w-xl mb-12">
-        <Eyebrow>Ce qui guide chaque envoi</Eyebrow>
-        <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.bark }}>Trois principes, aucun compromis.</h2>
-      </div>
+      <Reveal>
+        <div className="max-w-xl mb-12">
+          <Eyebrow>Ce qui guide chaque envoi</Eyebrow>
+          <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.bark }}>Trois principes, aucun compromis.</h2>
+        </div>
+      </Reveal>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7">
-        {items.map(({ icon: Icon, title, text }) => (
-          <div key={title} className="rounded-2xl p-7 border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.1)" }}>
-            <Icon size={28} color={colors.ink} strokeWidth={2.2} />
-            <h3 className="mt-4 text-lg font-semibold" style={{ color: colors.bark }}>{title}</h3>
-            <p className="mt-2 text-sm" style={{ color: colors.ink, opacity: 0.78 }}>{text}</p>
-          </div>
+        {items.map(({ icon: Icon, title, text }, i) => (
+          <Reveal key={title} delay={i * 100}>
+            <div className="rounded-2xl p-7 border h-full transition-transform hover:-translate-y-1" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.1)" }}>
+              <Icon size={28} color={colors.ink} strokeWidth={2.2} />
+              <h3 className="mt-4 text-lg font-semibold" style={{ color: colors.bark }}>{title}</h3>
+              <p className="mt-2 text-sm" style={{ color: colors.ink, opacity: 0.78 }}>{text}</p>
+            </div>
+          </Reveal>
         ))}
       </div>
     </section>
@@ -424,68 +609,72 @@ function Catalogue() {
   return (
     <section id="catalogue" className="py-16 sm:py-20" style={{ backgroundColor: colors.parchmentSoft }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
-        <div className="max-w-xl mb-9 sm:mb-11">
-          <Eyebrow>Ce que l'on propose</Eyebrow>
-          <h2 className="mt-3" style={{ ...display, fontSize: "clamp(26px,4vw,38px)", color: colors.bark }}>Le catalogue, en bref.</h2>
-        </div>
+        <Reveal>
+          <div className="max-w-xl mb-9 sm:mb-11">
+            <Eyebrow>Ce que l'on propose</Eyebrow>
+            <h2 className="mt-3" style={{ ...display, fontSize: "clamp(26px,4vw,38px)", color: colors.bark }}>Le catalogue, en bref.</h2>
+          </div>
+        </Reveal>
 
         {products.length === 0 && (
           <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Chargement du catalogue...</p>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {products.map((p) => {
+          {products.map((p, i) => {
             const outOfStock = !p.soon && isOutOfStock(p.id);
             return (
-              <div key={p.id} className="rounded-2xl border flex flex-col overflow-hidden" style={{ backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}>
-                <ProductImage images={p.images} className="w-full h-44 sm:h-40" onClick={() => setZoomProduct(p)} zoomable />
-                <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
-                <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
-                <p className="px-6 pt-2 text-sm" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
+              <Reveal key={p.id} delay={(i % 3) * 100}>
+                <div className="rounded-2xl border flex flex-col overflow-hidden h-full transition-shadow hover:shadow-lg" style={{ backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}>
+                  <ProductImage images={p.images} className="w-full h-44 sm:h-40" onClick={() => setZoomProduct(p)} zoomable />
+                  <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
+                  <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
+                  <p className="px-6 pt-2 text-sm" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
 
-                {p.specs && p.specs.length > 0 && (
-                  <ul className="px-6 pt-3 space-y-1.5">
-                    {p.specs.map((s) => (
-                      <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
-                        <span style={{ ...mono, color: colors.moss, letterSpacing: "0.03em" }}>{s.label}</span>
-                        <span style={{ color: colors.ink, opacity: 0.8, textAlign: "right" }}>{s.value}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                  {p.specs && p.specs.length > 0 && (
+                    <ul className="px-6 pt-3 space-y-1.5">
+                      {p.specs.map((s) => (
+                        <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
+                          <span style={{ ...mono, color: colors.moss, letterSpacing: "0.03em" }}>{s.label}</span>
+                          <span style={{ color: colors.ink, opacity: 0.8, textAlign: "right" }}>{s.value}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-                <div className="flex-1" />
+                  <div className="flex-1" />
 
-                {p.soon ? (
-                  <span className="mx-6 mt-4 mb-5 w-fit rounded-md border border-dashed px-2.5 py-1 text-[11px]" style={{ ...mono, color: colors.moss, borderColor: colors.moss }}>
-                    En préparation
-                  </span>
-                ) : (
-                  <div className="px-6 pb-6 pt-4 flex items-center justify-between gap-3 flex-wrap">
-                    <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "18px" }}>{p.price.toFixed(2)} €</span>
-                    {outOfStock ? (
-                      <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
-                    ) : cart[p.id] ? (
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => removeFromCart(p.id)} className="w-7 h-7 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
-                        <span style={mono}>{cart[p.id]}</span>
-                        <button
-                          onClick={() => addToCart(p.id)}
-                          disabled={remainingStock(p.id) <= 0}
-                          className="w-7 h-7 rounded-full border font-bold disabled:opacity-40"
-                          style={{ borderColor: colors.ink, color: colors.ink }}
-                        >
-                          +
+                  {p.soon ? (
+                    <span className="mx-6 mt-4 mb-5 w-fit rounded-md border border-dashed px-2.5 py-1 text-[11px]" style={{ ...mono, color: colors.moss, borderColor: colors.moss }}>
+                      En préparation
+                    </span>
+                  ) : (
+                    <div className="px-6 pb-6 pt-4 flex items-center justify-between gap-3 flex-wrap">
+                      <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "18px" }}>{p.price.toFixed(2)} €</span>
+                      {outOfStock ? (
+                        <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
+                      ) : cart[p.id] ? (
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => removeFromCart(p.id)} className="w-7 h-7 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
+                          <span style={mono}>{cart[p.id]}</span>
+                          <button
+                            onClick={() => addToCart(p.id)}
+                            disabled={remainingStock(p.id) <= 0}
+                            className="w-7 h-7 rounded-full border font-bold disabled:opacity-40"
+                            style={{ borderColor: colors.ink, color: colors.ink }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => addToCart(p.id)} className="rounded-full px-4 py-2 text-xs font-semibold transition-transform hover:-translate-y-0.5" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+                          Ajouter au panier
                         </button>
-                      </div>
-                    ) : (
-                      <button onClick={() => addToCart(p.id)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
-                        Ajouter au panier
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Reveal>
             );
           })}
         </div>
@@ -508,18 +697,22 @@ function Community() {
   return (
     <section id="communaute" className="py-16 sm:py-20" style={{ backgroundColor: colors.bark }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
-        <Eyebrow dark>Où nous retrouver</Eyebrow>
-        <h2 className="mt-3 max-w-md" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.parchment }}>La boutique ne dort jamais sur une seule plateforme.</h2>
-        <p className="mt-4 max-w-lg" style={{ color: colors.parchment, opacity: 0.72 }}>Chaque canal a un rôle précis — des lives aux échanges quotidiens avec la communauté.</p>
+        <Reveal>
+          <Eyebrow dark>Où nous retrouver</Eyebrow>
+          <h2 className="mt-3 max-w-md" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.parchment }}>La boutique ne dort jamais sur une seule plateforme.</h2>
+          <p className="mt-4 max-w-lg" style={{ color: colors.parchment, opacity: 0.72 }}>Chaque canal a un rôle précis — des lives aux échanges quotidiens avec la communauté.</p>
+        </Reveal>
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {links.map((l) => (
-            <a key={l.name} href="#" className="flex items-center justify-between rounded-2xl px-5 py-4 no-underline border" style={{ borderColor: "rgba(245,241,230,0.18)", color: colors.parchment }}>
-              <span>
-                <span className="block font-semibold text-[15px]">{l.name}</span>
-                <span className="block mt-0.5 text-[11px]" style={{ ...mono, color: colors.tealGlow, letterSpacing: "0.04em" }}>{l.role}</span>
-              </span>
-              <ArrowRight size={18} color={colors.tealGlow} />
-            </a>
+          {links.map((l, i) => (
+            <Reveal key={l.name} delay={(i % 4) * 80}>
+              <a href="#" className="flex items-center justify-between rounded-2xl px-5 py-4 no-underline border transition-colors hover:border-opacity-60" style={{ borderColor: "rgba(245,241,230,0.18)", color: colors.parchment }}>
+                <span>
+                  <span className="block font-semibold text-[15px]">{l.name}</span>
+                  <span className="block mt-0.5 text-[11px]" style={{ ...mono, color: colors.tealGlow, letterSpacing: "0.04em" }}>{l.role}</span>
+                </span>
+                <ArrowRight size={18} color={colors.tealGlow} />
+              </a>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -972,19 +1165,17 @@ function LegalPage() {
           <p><strong>Finalité</strong> — Ces données sont utilisées exclusivement pour le traitement, l'expédition et le suivi de la commande.</p>
           <p><strong>Destinataires</strong> — Stripe (traitement du paiement), Cloudflare (hébergement technique). Aucune donnée n'est vendue ou transmise à des fins commerciales tierces.</p>
           <p><strong>Durée de conservation</strong> — Les données sont conservées le temps nécessaire au traitement de la commande et aux obligations comptables légales.</p>
-          <p><strong>Cookies et traceurs</strong> — Ce site n'utilise pas de cookies de suivi ni d'outils d'analyse d'audience à ce jour. Les polices de caractères sont actuellement chargées depuis les serveurs Google Fonts, ce qui peut entraîner la transmission de l'adresse IP du visiteur à Google LLC ; une migration vers un hébergement local des polices est prévue.</p>
+          <p><strong>Cookies et traceurs</strong> — Ce site n'utilise pas de cookies de suivi ni d'outils d'analyse d'audience. Les polices de caractères sont auto-hébergées (aucune requête vers Google Fonts).</p>
           <p><strong>Vos droits</strong> — Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, d'effacement et de portabilité de vos données. Pour l'exercer, contactez dreamvalleyspcli@gmail.com.</p>
         </Section>
       </div>
     </div>
   );
 }
+
 function SuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: colors.parchment }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
-      `}</style>
       <div className="max-w-md text-center">
         <div className="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.ink }}>
           <CheckCircle2 size={32} color={colors.parchment} />
@@ -1011,9 +1202,6 @@ function SuccessPage() {
 function CancelPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: colors.parchment }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
-      `}</style>
       <div className="max-w-md text-center">
         <div className="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center border-2" style={{ borderColor: colors.ink }}>
           <XCircle size={32} color={colors.ink} />
@@ -1048,10 +1236,8 @@ export default function DreamValleySite() {
 
   return (
     <CartProvider>
+      <GlobalMotionStyles />
       <div id="top" style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
-        `}</style>
         <NavBar />
         <CartDrawer />
         <Hero />
