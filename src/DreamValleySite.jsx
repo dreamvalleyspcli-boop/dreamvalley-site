@@ -313,10 +313,19 @@ function ProductModal({ product, onClose }) {
               <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px]" style={{ ...mono, backgroundColor: "rgba(13,27,42,0.7)", color: colors.tealGlow, letterSpacing: "0.06em" }}>
                 {product.tag}
               </div>
+
+              <button
+                onClick={() => setFlipped(true)}
+                aria-label="Voir les détails du produit"
+                className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-md"
+                style={{ backgroundColor: "rgba(13,27,42,0.7)", color: colors.parchment }}
+              >
+                <Info size={16} />
+              </button>
             </div>
 
             <div className="p-5" style={{ backgroundColor: colors.parchment }}>
-              <p className="line-clamp-2 pr-9" style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
+              <p className="line-clamp-2" style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
 
               {!product.soon && (
                 <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
@@ -337,16 +346,6 @@ function ProductModal({ product, onClose }) {
                 </div>
               )}
             </div>
-
-            {/* Bouton retournement -- positionné hors du flux, toujours visible quelle que soit la taille du contenu au-dessus */}
-            <button
-              onClick={() => setFlipped(true)}
-              aria-label="Voir les détails du produit"
-              className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-md"
-              style={{ backgroundColor: colors.ink, color: colors.parchment }}
-            >
-              <Info size={18} />
-            </button>
           </div>
 
           {/* ---- Face arrière : détails ---- */}
