@@ -1,5 +1,12 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle } from "lucide-react";
+import "@fontsource/fraunces/400.css";
+import "@fontsource/fraunces/600.css";
+import "@fontsource/fraunces/700.css";
+import "@fontsource/fraunces/500-italic.css";
+import "@fontsource/jetbrains-mono/400.css";
+import "@fontsource/jetbrains-mono/500.css";
+
 
 const CHECKOUT_API_URL = "https://dreamvalley-api.dreamvalleyspcli.workers.dev";
 
@@ -925,9 +932,6 @@ function LegalPage() {
 
   return (
     <div style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
-      `}</style>
       <div className="max-w-2xl mx-auto px-5 sm:px-6 py-12">
         <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-8" style={{ color: colors.ink, opacity: 0.65 }}>
           <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
