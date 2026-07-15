@@ -757,10 +757,10 @@ function CatalogueCard({ p, onOpenModal }) {
     );
 
   return (
-    <div className="relative w-full" style={{ height: "600px", perspective: "1500px" }}>
+    <div className="relative w-full" style={{ height: "580px", perspective: "1500px" }}>
       <div
         className="relative w-full transition-transform duration-700"
-        style={{ height: "600px", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+        style={{ height: "580px", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
       >
         {/* Face avant -- aperçu */}
         <div
@@ -784,8 +784,6 @@ function CatalogueCard({ p, onOpenModal }) {
           <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
           <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
           <p className="px-6 pt-2 text-sm line-clamp-3 whitespace-pre-line" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
-
-          <div className="flex-1" />
 
           <div className="px-6 pb-6 pt-4">
             <CartControls />
