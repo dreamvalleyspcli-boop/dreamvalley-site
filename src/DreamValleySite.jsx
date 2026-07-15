@@ -317,6 +317,26 @@ function ProductModal({ product, onClose }) {
 
             <div className="p-5" style={{ backgroundColor: colors.parchment }}>
               <p style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
+
+              {!product.soon && (
+                <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+                  <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "18px" }}>{Number(product.price).toFixed(2)} €</span>
+                  {outOfStock ? (
+                    <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
+                  ) : cart[product.id] ? (
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => removeFromCart(product.id)} className="w-7 h-7 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
+                      <span style={mono}>{cart[product.id]}</span>
+                      <button onClick={() => addToCart(product.id)} disabled={remainingStock(product.id) <= 0} className="w-7 h-7 rounded-full border font-bold disabled:opacity-40" style={{ borderColor: colors.ink, color: colors.ink }}>+</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => addToCart(product.id)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+                      Ajouter au panier
+                    </button>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={() => setFlipped(true)}
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold underline"
