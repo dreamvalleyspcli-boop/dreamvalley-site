@@ -609,12 +609,12 @@ function IconCardmarket(props) {
 }
 
 const SOCIAL_LINKS = [
-  { name: "Instagram", Icon: IconInstagram, href: "#" },
-  { name: "TikTok", Icon: IconTikTok, href: "#" },
-  { name: "Discord", Icon: IconDiscord, href: "#" },
-  { name: "Vinted", Icon: IconVinted, href: "#" },
-  { name: "Whatnot", Icon: IconWhatnot, href: "#" },
-  { name: "Cardmarket", Icon: IconCardmarket, href: "#" },
+  { name: "Instagram", Icon: IconInstagram, href: "https://www.instagram.com/dreamvalleytcg/" },
+  { name: "TikTok", Icon: IconTikTok, href: "https://www.tiktok.com/@dreamvalleytcg" },
+  { name: "Discord", Icon: IconDiscord, href: "" }, // à activer une fois le serveur finalisé
+  { name: "Vinted", Icon: IconVinted, href: "" }, // à activer une fois le nouveau compte prêt
+  { name: "Whatnot", Icon: IconWhatnot, href: "https://www.whatnot.com/fr-FR/user/dreavalleytcg" },
+  { name: "Cardmarket", Icon: IconCardmarket, href: "https://www.cardmarket.com/fr/Pokemon/Users/DreamValleytcg" },
 ];
 
 function NavBar() {
@@ -629,7 +629,7 @@ function NavBar() {
         </a>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
-          {SOCIAL_LINKS.map(({ name, Icon, href }) => (
+          {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
             <a
               key={name}
               href={href}
@@ -958,12 +958,12 @@ function Catalogue() {
 
 function Community() {
   const links = [
-    { name: "Discord", role: "Communauté & annonces" },
-    { name: "Whatnot", role: "Lives & ventes en direct" },
-    { name: "Cardmarket", role: "Vente à l'unité" },
-    { name: "Instagram", role: "Coulisses & annonces" },
-    { name: "TikTok", role: "Actu & curation TCG" },
-    { name: "Contact", role: "Une question, un partenariat" },
+    { name: "Discord", role: "Communauté & annonces", href: "" },
+    { name: "Whatnot", role: "Lives & ventes en direct", href: "https://www.whatnot.com/fr-FR/user/dreavalleytcg" },
+    { name: "Cardmarket", role: "Vente à l'unité", href: "https://www.cardmarket.com/fr/Pokemon/Users/DreamValleytcg" },
+    { name: "Instagram", role: "Coulisses & annonces", href: "https://www.instagram.com/dreamvalleytcg/" },
+    { name: "TikTok", role: "Actu & curation TCG", href: "https://www.tiktok.com/@dreamvalleytcg" },
+    { name: "Contact", role: "Une question, un partenariat", href: "mailto:dreamvalleyspcli@gmail.com" },
   ];
   return (
     <section id="communaute" className="py-16 sm:py-20" style={{ backgroundColor: colors.bark }}>
@@ -974,9 +974,9 @@ function Community() {
           <p className="mt-4 max-w-lg" style={{ color: colors.parchment, opacity: 0.72 }}>Chaque canal a un rôle précis — des lives aux échanges quotidiens avec la communauté.</p>
         </Reveal>
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {links.map((l, i) => (
+          {links.filter((l) => l.href).map((l, i) => (
             <Reveal key={l.name} delay={(i % 4) * 80}>
-              <a href="#" className="flex items-center justify-between rounded-2xl px-5 py-4 no-underline border transition-colors hover:border-opacity-60" style={{ borderColor: "rgba(245,241,230,0.18)", color: colors.parchment }}>
+              <a href={l.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-2xl px-5 py-4 no-underline border transition-colors hover:border-opacity-60" style={{ borderColor: "rgba(245,241,230,0.18)", color: colors.parchment }}>
                 <span>
                   <span className="block font-semibold text-[15px]">{l.name}</span>
                   <span className="block mt-0.5 text-[11px]" style={{ ...mono, color: colors.tealGlow, letterSpacing: "0.04em" }}>{l.role}</span>
