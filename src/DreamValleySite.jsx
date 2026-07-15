@@ -285,7 +285,7 @@ function ProductModal({ product, onClose }) {
             className="absolute inset-0 rounded-2xl overflow-hidden border-2 flex flex-col"
             style={{ backfaceVisibility: "hidden", borderColor: colors.goldBright, backgroundColor: colors.parchmentSoft }}
           >
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-h-0">
               {images[index] ? (
                 <img src={images[index]} alt={product.name} className="w-full h-full object-cover" />
               ) : (
@@ -316,7 +316,7 @@ function ProductModal({ product, onClose }) {
             </div>
 
             <div className="p-5" style={{ backgroundColor: colors.parchment }}>
-              <p style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
+              <p className="line-clamp-2" style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
 
               {!product.soon && (
                 <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
