@@ -929,7 +929,7 @@ function AdminPage() {
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState("");
-  const [form, setForm] = useState({ name: "", price: "", tag: "", text: "", images: [], specsText: "", soon: false });
+  const [form, setForm] = useState({ name: "", price: "", weight: "", tag: "", text: "", images: [], specsText: "", soon: false });
 
   function moveImage(index, direction) {
     setForm((f) => {
@@ -986,6 +986,7 @@ function AdminPage() {
     setForm({
       name: p.name || "",
       price: p.soon ? "" : String(p.price ?? ""),
+      weight: String(p.weight ?? ""),
       tag: p.tag || "",
       text: p.text || "",
       images: [...(p.images || [])],
@@ -998,7 +999,7 @@ function AdminPage() {
   }
 
   function resetForm() {
-    setForm({ name: "", price: "", tag: "", text: "", images: [], specsText: "", soon: false });
+    setForm({ name: "", price: "", weight: "", tag: "", text: "", images: [], specsText: "", soon: false });
     setEditingId(null);
     setAddError("");
   }
@@ -1065,6 +1066,7 @@ function AdminPage() {
       const payload = {
         name: form.name.trim(),
         price: form.price,
+        weight: form.weight,
         tag: form.tag.trim(),
         text: form.text.trim(),
         images: form.images,
@@ -1172,6 +1174,7 @@ function AdminPage() {
             <input placeholder="Nom du produit *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             <div className="flex gap-3 flex-wrap">
               <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+              <input placeholder="Poids en grammes (ex: 1400)" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className="flex-1 min-w-[160px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
               <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
             </div>
             <textarea placeholder={"Description (utilise Entrée pour aller à la ligne, ex: séparer les points par des retours à la ligne)"} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={4} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
@@ -1259,7 +1262,7 @@ function AdminPage() {
                 <ProductImage images={p.images} className="w-12 h-12 rounded-lg shrink-0" />
                 <div className="min-w-0">
                   <p className="font-semibold truncate" style={{ color: colors.bark }}>{p.name}</p>
-                  <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}</p>
+                  <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}{p.weight ? ` · ${p.weight} g` : ""}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: colors.moss }}>
                     {p.images && p.images.length > 0 ? `${p.images.length} image(s) enregistrée(s)` : "Aucune image enregistrée"}
                   </p>
