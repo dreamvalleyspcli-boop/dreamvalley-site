@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Github, Mail, Search, Truck } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
@@ -986,9 +986,9 @@ function Community() {
     <section id="communaute" className="py-16 sm:py-20" style={{ backgroundColor: colors.bark }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
         <Reveal>
-          <Eyebrow dark>Nos réseaux</Eyebrow>
-          <h2 className="mt-3 max-w-md" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.ink }}>La boutique ne dort jamais, retrouvez-nous sur nos réseaux !</h2>
-          <p className="mt-4 max-w-lg" style={{ color: colors.ink, opacity: 0.72 }}>Ouvertures, live, giveway, tout ce passe en dessous.</p>
+          <Eyebrow dark>Où nous retrouver</Eyebrow>
+          <h2 className="mt-3 max-w-md" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.ink }}>La boutique ne dort jamais sur une seule plateforme.</h2>
+          <p className="mt-4 max-w-lg" style={{ color: colors.ink, opacity: 0.72 }}>Chaque canal a un rôle précis — des lives aux échanges quotidiens avec la communauté.</p>
         </Reveal>
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {links.filter((l) => l.href).map((l, i) => (
@@ -1023,6 +1023,49 @@ function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+const QUICK_LINKS = [
+  { name: "Stripe", role: "Paiements & remboursements", Icon: CreditCard, href: "https://dashboard.stripe.com" },
+  { name: "Cloudflare", role: "Site, API, stock, images", Icon: Cloud, href: "https://dash.cloudflare.com" },
+  { name: "GitHub", role: "Code source du site", Icon: Github, href: "https://github.com/dreamvalleyspcli-boop/dreamvalley-site" },
+  { name: "Google Search Console", role: "Référencement", Icon: Search, href: "https://search.google.com/search-console" },
+  { name: "Gmail", role: "Boîte mail pro", Icon: Mail, href: "https://mail.google.com" },
+  { name: "Discord", role: "Communauté", Icon: IconDiscord, href: "https://discord.gg/pNv9xPKGwV" },
+  { name: "Instagram", role: "Réseau social", Icon: IconInstagram, href: "https://www.instagram.com/dreamvalleytcg/" },
+  { name: "TikTok", role: "Réseau social", Icon: IconTikTok, href: "https://www.tiktok.com/@dreamvalleytcg" },
+  { name: "Whatnot", role: "Ventes en direct", Icon: IconWhatnot, href: "https://www.whatnot.com/fr-FR/user/dreavalleytcg" },
+  { name: "Cardmarket", role: "Vente à l'unité", Icon: IconCardmarket, href: "https://www.cardmarket.com/fr/Pokemon/Users/DreamValleytcg" },
+  { name: "Mondial Relay Pro", role: "Étiquettes d'envoi", Icon: Truck, href: "https://www.mondialrelay.fr" },
+  { name: "Chronopost Pro", role: "Étiquettes d'envoi", Icon: Truck, href: "https://www.chronopost.fr" },
+];
+
+function QuickLinks() {
+  return (
+    <div className="mb-8">
+      <p className="text-sm font-semibold mb-3" style={{ color: colors.ink }}>Liens rapides</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        {QUICK_LINKS.map(({ name, role, Icon, href }) => (
+          <a
+            key={name}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 no-underline border transition-colors hover:border-opacity-60"
+            style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.12)" }}
+          >
+            <span className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.bark }}>
+              <Icon size={16} color={colors.goldBright} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xs font-semibold truncate" style={{ color: colors.ink }}>{name}</span>
+              <span className="block text-[10px] truncate" style={{ ...mono, color: colors.moss }}>{role}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -1260,6 +1303,9 @@ function AdminPage() {
         <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-4" style={{ color: colors.ink, opacity: 0.65 }}>
           <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
         </a>
+
+        <QuickLinks />
+
         <div className="flex items-center justify-between flex-wrap gap-3 mb-8">
           <h1 style={{ ...display, color: colors.ink, fontSize: "28px" }}>Catalogue & stock</h1>
           <button
