@@ -23,6 +23,7 @@ const colors = {
 
 const display = { fontFamily: "'Fraunces', serif" };
 const mono = { fontFamily: "'JetBrains Mono', monospace" };
+const CATEGORIES = ["Produits Chinois", "Produits Français", "Produits Japonais", "Produits Coréen", "Carte à l'unité"];
 
 // ---------- Animation globale ----------
 function GlobalMotionStyles() {
@@ -455,6 +456,8 @@ function CartProvider({ children }) {
   });
   const [stock, setStock] = useState({});
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(CATEGORIES);
+  const [activeCategory, setActiveCategory] = useState(null); // null = toutes les catégories
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [status, setStatus] = useState("idle");
 
@@ -469,6 +472,7 @@ function CartProvider({ children }) {
   useEffect(() => {
     fetch(`${CHECKOUT_API_URL}/api/stock`).then((r) => r.json()).then(setStock).catch(() => {});
     fetch(`${CHECKOUT_API_URL}/api/products`).then((r) => r.json()).then(setProducts).catch(() => {});
+    fetch(`${CHECKOUT_API_URL}/api/categories`).then((r) => r.json()).then(setCategories).catch(() => {});
   }, []);
 
   const addToCart = (id) => {
@@ -537,7 +541,7 @@ function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, cartItems, totalCount, total, addToCart, removeFromCart, removeItemCompletely, drawerOpen, setDrawerOpen, checkout, status, isOutOfStock, remainingStock, products }}
+      value={{ cart, cartItems, totalCount, total, addToCart, removeFromCart, removeItemCompletely, drawerOpen, setDrawerOpen, checkout, status, isOutOfStock, remainingStock, products, categories, activeCategory, setActiveCategory }}
     >
       {children}
     </CartContext.Provider>
@@ -656,7 +660,51 @@ function NavBar() {
           </button>
         </div>
       </div>
+
+      <CategoryBar />
     </header>
+  );
+}
+
+function CategoryBar() {
+  const { categories, activeCategory, setActiveCategory } = useCart();
+
+  function selectCategory(cat) {
+    setActiveCategory(cat);
+    const el = document.getElementById("catalogue");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  return (
+    <div className="border-t overflow-x-auto" style={{ borderColor: "rgba(22,50,74,0.1)" }}>
+      <div className="max-w-6xl mx-auto px-5 sm:px-6 flex items-center gap-2 py-2.5 whitespace-nowrap">
+        <button
+          onClick={() => selectCategory(null)}
+          className="px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors"
+          style={
+            activeCategory === null
+              ? { backgroundColor: colors.ink, color: colors.parchment }
+              : { backgroundColor: "transparent", color: colors.ink, border: "1px solid rgba(22,50,74,0.2)" }
+          }
+        >
+          Tout
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => selectCategory(cat)}
+            className="px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors"
+            style={
+              activeCategory === cat
+                ? { backgroundColor: colors.ink, color: colors.parchment }
+                : { backgroundColor: "transparent", color: colors.ink, border: "1px solid rgba(22,50,74,0.2)" }
+            }
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -755,11 +803,11 @@ function Hero() {
         </Reveal>
 
         <Reveal delay={100}>
-          <Eyebrow>DreamValleyTCG — Là où votre histoire commence</Eyebrow>
+          <Eyebrow>DreamValleyTCG — Revendeur indépendant</Eyebrow>
         </Reveal>
         <Reveal delay={180}>
           <h1 className="mt-4 max-w-xl" style={{ ...display, fontWeight: 600, fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.08, color: colors.bark }}>
-            Bienvenue, chez nous, vous êtes <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>inclu</span> dans l'aventure.
+            Chaque produit a une histoire <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>avant</span> d'arriver chez vous.
           </h1>
         </Reveal>
         <Reveal delay={260}>
@@ -914,7 +962,7 @@ function CatalogueCard({ p, onOpenModal }) {
 }
 
 function Catalogue() {
-  const { products } = useCart();
+  const { products, activeCategory, categories } = useCart();
   const [activeProduct, setActiveProduct] = useState(null);
 
   // Si quelqu'un arrive directement sur /produit/un-slug (lien partagé, résultat Google...),
@@ -928,13 +976,18 @@ function Catalogue() {
     }
   }, [products]);
 
+  const filtered = activeCategory ? products.filter((p) => p.category === activeCategory) : products;
+  const isEmptyCategory = activeCategory && products.length > 0 && filtered.length === 0;
+
   return (
     <section id="catalogue" className="py-16 sm:py-20" style={{ backgroundColor: colors.parchmentSoft }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
         <Reveal>
           <div className="max-w-xl mb-9 sm:mb-11">
-            <Eyebrow>Ce que l'on propose</Eyebrow>
-            <h2 className="mt-3" style={{ ...display, fontSize: "clamp(26px,4vw,38px)", color: colors.bark }}>Le catalogue, en bref.</h2>
+            <Eyebrow>{activeCategory || "Ce que l'on propose"}</Eyebrow>
+            <h2 className="mt-3" style={{ ...display, fontSize: "clamp(26px,4vw,38px)", color: colors.bark }}>
+              {activeCategory ? activeCategory : "Le catalogue, en bref."}
+            </h2>
           </div>
         </Reveal>
 
@@ -942,8 +995,19 @@ function Catalogue() {
           <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Chargement du catalogue...</p>
         )}
 
+        {isEmptyCategory && (
+          <Reveal>
+            <div className="rounded-2xl border border-dashed p-10 text-center" style={{ borderColor: colors.moss, backgroundColor: colors.parchment }}>
+              <p style={{ ...display, color: colors.bark, fontSize: "22px" }}>Bientôt disponible</p>
+              <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: colors.ink, opacity: 0.75 }}>
+                Les {activeCategory?.toLowerCase()} arrivent prochainement — reviens jeter un œil bientôt, ou rejoins le Discord pour être prévenu en avant-première.
+              </p>
+            </div>
+          </Reveal>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {products.map((p, i) => (
+          {filtered.map((p, i) => (
             <Reveal key={p.id} delay={(i % 3) * 100}>
               <CatalogueCard p={p} onOpenModal={setActiveProduct} />
             </Reveal>
@@ -1024,7 +1088,7 @@ function AdminPage() {
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState("");
-  const [form, setForm] = useState({ name: "", price: "", weight: "", tag: "", text: "", images: [], specsText: "", soon: false });
+  const [form, setForm] = useState({ name: "", price: "", weight: "", tag: "", text: "", images: [], specsText: "", soon: false, category: "Produits Chinois" });
 
   function moveImage(index, direction) {
     setForm((f) => {
@@ -1087,6 +1151,7 @@ function AdminPage() {
       images: [...(p.images || [])],
       specsText: (p.specs || []).map((s) => `${s.label}: ${s.value}`).join("\n"),
       soon: !!p.soon,
+      category: p.category || "Produits Chinois",
     });
     setEditingId(p.id);
     setAddError("");
@@ -1094,7 +1159,7 @@ function AdminPage() {
   }
 
   function resetForm() {
-    setForm({ name: "", price: "", weight: "", tag: "", text: "", images: [], specsText: "", soon: false });
+    setForm({ name: "", price: "", weight: "", tag: "", text: "", images: [], specsText: "", soon: false, category: "Produits Chinois" });
     setEditingId(null);
     setAddError("");
   }
@@ -1167,6 +1232,7 @@ function AdminPage() {
         images: form.images,
         specs,
         soon: form.soon,
+        category: form.category,
       };
       if (editingId) payload.id = editingId;
 
@@ -1267,6 +1333,11 @@ function AdminPage() {
               {editingId ? "Modifier le produit" : "Nouveau produit"}
             </p>
             <input placeholder="Nom du produit *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }}>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
             <div className="flex gap-3 flex-wrap">
               <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
               <input placeholder="Poids en grammes (ex: 1400)" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className="flex-1 min-w-[160px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
@@ -1358,6 +1429,7 @@ function AdminPage() {
                 <div className="min-w-0">
                   <p className="font-semibold truncate" style={{ color: colors.bark }}>{p.name}</p>
                   <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}{p.weight ? ` · ${p.weight} g` : ""}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: colors.gold }}>{p.category || "Sans catégorie"}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: colors.moss }}>
                     {p.images && p.images.length > 0 ? `${p.images.length} image(s) enregistrée(s)` : "Aucune image enregistrée"}
                   </p>
