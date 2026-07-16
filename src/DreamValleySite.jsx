@@ -589,23 +589,24 @@ function NavBar() {
           <img src="/favicon-logo.png" alt="DreamValleyTCG" className="h-14 sm:h-16 w-auto" />
         </a>
 
-        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
+        <div className="flex items-end gap-2 sm:gap-3 flex-wrap justify-end">
           {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
             <a
               key={name}
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={name}
-              className="p-1.5 sm:p-2 rounded-full transition-colors"
+              className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline"
               style={{ color: colors.ink }}
             >
-              <Icon width={22} height={22} />
+              <Icon width={20} height={20} />
+              <span className="text-[9px] sm:text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>{name}</span>
             </a>
           ))}
 
-          <button onClick={() => setDrawerOpen(true)} className="relative p-2 rounded-full ml-1" style={{ color: colors.ink }} aria-label="Ouvrir le panier">
+          <button onClick={() => setDrawerOpen(true)} className="relative flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg ml-1" style={{ color: colors.ink }} aria-label="Ouvrir le panier">
             <ShoppingBag size={20} />
+            <span className="text-[9px] sm:text-[10px] font-semibold leading-none" style={mono}>Panier</span>
             {totalCount > 0 && (
               <span
                 className="absolute -top-1 -right-1 text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold"
