@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Github, Mail, Search, Truck } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Code2, Mail, Search, Truck } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
@@ -1029,7 +1029,7 @@ function Footer() {
 const QUICK_LINKS = [
   { name: "Stripe", role: "Paiements & remboursements", Icon: CreditCard, href: "https://dashboard.stripe.com" },
   { name: "Cloudflare", role: "Site, API, stock, images", Icon: Cloud, href: "https://dash.cloudflare.com" },
-  { name: "GitHub", role: "Code source du site", Icon: Github, href: "https://github.com/dreamvalleyspcli-boop/dreamvalley-site" },
+  { name: "GitHub", role: "Code source du site", Icon: Code2, href: "https://github.com/dreamvalleyspcli-boop/dreamvalley-site" },
   { name: "Google Search Console", role: "Référencement", Icon: Search, href: "https://search.google.com/search-console" },
   { name: "Gmail", role: "Boîte mail pro", Icon: Mail, href: "https://mail.google.com" },
   { name: "Discord", role: "Communauté", Icon: IconDiscord, href: "https://discord.gg/pNv9xPKGwV" },
