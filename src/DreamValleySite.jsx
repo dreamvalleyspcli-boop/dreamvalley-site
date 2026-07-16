@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
@@ -10,22 +10,21 @@ import "@fontsource/jetbrains-mono/500.css";
 const CHECKOUT_API_URL = "https://dreamvalley-api.dreamvalleyspcli.workers.dev";
 
 const colors = {
-  parchment: "#f5f1e6",
-  parchmentSoft: "#ece4d3",
-  ink: "#16324a",
+  parchment: "#181F31",
+  parchmentSoft: "#212a42",
+  ink: "#f0ece0",
   bark: "#0d1b2a",
-  gold: "#a9821f",
-  goldBright: "#d9a441",
-  moss: "#5c7a92",
-  teal: "#b5567a",
-  tealGlow: "#e8a8bf",
+  gold: "#d9a441",
+  goldBright: "#f0c674",
+  moss: "#8ba3b8",
+  teal: "#e8a8bf",
+  tealGlow: "#f0c4d6",
 };
 
 const display = { fontFamily: "'Fraunces', serif" };
 const mono = { fontFamily: "'JetBrains Mono', monospace" };
 const CATEGORIES = ["Produits Chinois", "Produits Français", "Produits Japonais", "Produits Coréen", "Carte à l'unité"];
 
-// ---------- Animation globale ----------
 function GlobalMotionStyles() {
   return (
     <style>{`
@@ -59,7 +58,6 @@ function GlobalMotionStyles() {
   );
 }
 
-// ---------- Révélation au scroll ----------
 function Reveal({ children, delay = 0, className = "" }) {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
@@ -87,7 +85,6 @@ function Reveal({ children, delay = 0, className = "" }) {
   );
 }
 
-// ---------- Pétales flottants (décoratif) ----------
 function Petals({ count = 10 }) {
   const petals = React.useMemo(
     () =>
@@ -123,84 +120,50 @@ function Petals({ count = 10 }) {
   );
 }
 
-// ---------- Bannière illustrée (originale, nuit/torii/cerisiers) ----------
 const SPARKLE_PATH = "M0,-10 C1,-3 3,-1 10,0 C3,1 1,3 0,10 C-1,3 -3,1 -10,0 C-3,-1 -1,-3 0,-10 Z";
 
-function FoilPack({ x, width, top, bottom, rotate, clipId }) {
-  const cx = x + width / 2;
-  const cy = (top + bottom) / 2;
-  const rx = 12;
-  return (
-    <g transform={`rotate(${rotate} ${cx} ${cy})`}>
-      <defs>
-        <clipPath id={clipId}>
-          <rect x={x} y={top} width={width} height={bottom - top} rx={rx} />
-        </clipPath>
-      </defs>
-      <rect x={x} y={top} width={width} height={bottom - top} rx={rx} fill="url(#foilGrad)" stroke="#0d1b2a" strokeWidth="2" />
-      <path d={`M${x + 8} ${top + 34} L${x + width - 8} ${top + 34}`} stroke="#0d1b2a" strokeWidth="2.5" opacity="0.55" />
-      <path d={`M${x} ${top + 10} L${x + width} ${top + 10} L${x + width - 12} ${top + 34} L${x + 12} ${top + 34} Z`} fill="#0d1b2a" opacity="0.28" />
-      <path d={SPARKLE_PATH} transform={`translate(${cx} ${cy + 20}) scale(2.1)`} fill="#f5f1e6" opacity="0.92" />
-      <g clipPath={`url(#${clipId})`}>
-        <rect className="dv-shine" x={x - width} y={top} width={width * 0.5} height={bottom - top} fill="#f5f1e6" opacity="0.16" transform={`skewX(-18)`} />
-      </g>
-    </g>
-  );
-}
-
 function HeroBanner() {
+  const sparkles = [
+    { top: "12%", left: "8%", scale: 0.5, delay: 0 },
+    { top: "22%", left: "88%", scale: 0.4, delay: 0.6 },
+    { top: "68%", left: "15%", scale: 0.45, delay: 1.1 },
+    { top: "78%", left: "92%", scale: 0.55, delay: 0.3 },
+    { top: "40%", left: "50%", scale: 0.35, delay: 1.6 },
+    { top: "15%", left: "45%", scale: 0.4, delay: 0.9 },
+    { top: "85%", left: "60%", scale: 0.5, delay: 1.3 },
+  ];
+
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl" style={{ height: "clamp(220px,32vw,340px)", backgroundColor: colors.bark }}>
-      <svg viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" className="absolute inset-0 w-full h-full" aria-hidden="true">
-        <defs>
-          <radialGradient id="spotGlow" cx="50%" cy="55%" r="55%">
-            <stop offset="0%" stopColor="#e8a8bf" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#e8a8bf" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="foilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#16324a" />
-            <stop offset="45%" stopColor="#a9821f" />
-            <stop offset="75%" stopColor="#d9a441" />
-            <stop offset="100%" stopColor="#c77b9a" />
-          </linearGradient>
-        </defs>
+    <div className="relative w-full overflow-hidden rounded-2xl" style={{ height: "clamp(220px,32vw,340px)", backgroundColor: colors.parchment }}>
+      <img
+        src="/banner.jpg"
+        alt="DreamValleyTCG"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{
+          maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+        }}
+      />
 
-        <rect x="0" y="0" width="1200" height="400" fill={colors.bark} />
-        <circle cx="600" cy="260" r="260" fill="url(#spotGlow)" />
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+          {sparkles.map((s, i) => (
+            <path
+              key={i}
+              className="dv-star"
+              d={SPARKLE_PATH}
+              transform={`translate(${parseFloat(s.left)} ${parseFloat(s.top)}) scale(${s.scale * 0.12})`}
+              fill="#f5f1e6"
+              style={{ animationDelay: `${s.delay}s` }}
+            />
+          ))}
+        </svg>
+      </div>
 
-        {[...Array(20)].map((_, i) => (
-          <path
-            key={i}
-            className="dv-star"
-            d={SPARKLE_PATH}
-            transform={`translate(${(i * 113) % 1200} ${18 + ((i * 47) % 150)}) scale(${i % 3 === 0 ? 0.5 : 0.32})`}
-            fill="#e8dfc4"
-            style={{ animationDelay: `${(i % 6) * 0.5}s` }}
-          />
-        ))}
-
-        <path d="M0 355 C 240 340, 420 365, 600 352 C 800 338, 980 366, 1200 350 L1200 400 L0 400 Z" fill="#0f2233" />
-
-        <g transform="translate(560 345) rotate(-8)">
-          <rect x="-34" y="-58" width="46" height="64" rx="6" fill="#132c42" stroke={colors.goldBright} strokeWidth="1.5" />
-          <path d={SPARKLE_PATH} transform="translate(-11 -26) scale(0.7)" fill={colors.tealGlow} />
-        </g>
-        <g transform="translate(636 348) rotate(10)">
-          <rect x="-30" y="-52" width="44" height="58" rx="6" fill="#132c42" stroke={colors.goldBright} strokeWidth="1.5" />
-          <path d={SPARKLE_PATH} transform="translate(-8 -23) scale(0.65)" fill={colors.tealGlow} />
-        </g>
-
-        <FoilPack x={400} width={95} top={150} bottom={400} rotate={-7} clipId="packA" />
-        <FoilPack x={655} width={95} top={150} bottom={400} rotate={7} clipId="packC" />
-        <FoilPack x={522} width={112} top={88} bottom={400} rotate={0} clipId="packB" />
-      </svg>
       <Petals count={14} />
     </div>
   );
 }
-
-// ---------- Produits ----------
-// La liste des produits vit maintenant côté serveur (KV) -- modifiable depuis /admin.
 
 function ProductImage({ images, className, onClick, zoomable = false, alt = "" }) {
   const image = images && images.length > 0 ? images[0] : null;
@@ -243,7 +206,6 @@ function ProductModal({ product, onClose }) {
     setFlipped(false);
   }, [product]);
 
-  // Synchronise l'URL et le titre d'onglet avec le produit affiché -- utile pour le partage de lien et le SEO
   useEffect(() => {
     if (!product) return;
     const previousTitle = document.title;
@@ -300,7 +262,7 @@ function ProductModal({ product, onClose }) {
           className="absolute -top-11 right-0 p-1 z-10"
           aria-label="Fermer"
         >
-          <X size={26} color={colors.parchment} />
+          <X size={26} color={colors.ink} />
         </button>
 
         <div
@@ -311,7 +273,6 @@ function ProductModal({ product, onClose }) {
             transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
           }}
         >
-          {/* ---- Face avant : visuel ---- */}
           <div
             className="absolute inset-0 rounded-2xl overflow-hidden border-2 flex flex-col"
             style={{ backfaceVisibility: "hidden", borderColor: colors.goldBright, backgroundColor: colors.parchmentSoft }}
@@ -328,14 +289,14 @@ function ProductModal({ product, onClose }) {
               {hasMultiple && (
                 <>
                   <button onClick={prevImg} aria-label="Image précédente" className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(13,27,42,0.6)" }}>
-                    <ArrowRight size={14} color={colors.parchment} style={{ transform: "rotate(180deg)" }} />
+                    <ArrowRight size={14} color={colors.ink} style={{ transform: "rotate(180deg)" }} />
                   </button>
                   <button onClick={nextImg} aria-label="Image suivante" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(13,27,42,0.6)" }}>
-                    <ArrowRight size={14} color={colors.parchment} />
+                    <ArrowRight size={14} color={colors.ink} />
                   </button>
                   <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
                     {images.map((_, i) => (
-                      <span key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: i === index ? colors.goldBright : "rgba(245,241,230,0.5)" }} />
+                      <span key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: i === index ? colors.goldBright : "rgba(240,236,224,0.4)" }} />
                     ))}
                   </div>
                 </>
@@ -348,20 +309,20 @@ function ProductModal({ product, onClose }) {
               <button
                 onClick={() => setFlipped(true)}
                 className="absolute top-3 right-3 z-10 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md"
-                style={{ backgroundColor: "rgba(13,27,42,0.75)", color: colors.parchment }}
+                style={{ backgroundColor: "rgba(13,27,42,0.75)", color: colors.ink }}
               >
                 Voir détails
               </button>
             </div>
 
-            <div className="p-5" style={{ backgroundColor: colors.parchment }}>
-              <p className="line-clamp-2" style={{ ...display, color: colors.bark, fontSize: "19px" }}>{product.name}</p>
+            <div className="p-5" style={{ backgroundColor: colors.parchmentSoft }}>
+              <p className="line-clamp-2" style={{ ...display, color: colors.ink, fontSize: "19px" }}>{product.name}</p>
 
               {!product.soon && (
                 <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
-                  <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "18px" }}>{Number(product.price).toFixed(2)} €</span>
+                  <span className="font-semibold" style={{ ...display, color: colors.ink, fontSize: "18px" }}>{Number(product.price).toFixed(2)} €</span>
                   {outOfStock ? (
-                    <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
+                    <span className="text-xs font-semibold" style={{ color: "#e08a7d" }}>Rupture de stock</span>
                   ) : cart[product.id] ? (
                     <div className="flex items-center gap-3">
                       <button onClick={() => removeFromCart(product.id)} className="w-7 h-7 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
@@ -369,7 +330,7 @@ function ProductModal({ product, onClose }) {
                       <button onClick={() => addToCart(product.id)} disabled={remainingStock(product.id) <= 0} className="w-7 h-7 rounded-full border font-bold disabled:opacity-40" style={{ borderColor: colors.ink, color: colors.ink }}>+</button>
                     </div>
                   ) : (
-                    <button onClick={() => addToCart(product.id)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+                    <button onClick={() => addToCart(product.id)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
                       Ajouter au panier
                     </button>
                   )}
@@ -378,26 +339,25 @@ function ProductModal({ product, onClose }) {
             </div>
           </div>
 
-          {/* ---- Face arrière : détails ---- */}
           <div
             className="absolute inset-0 rounded-2xl overflow-hidden border-2 flex flex-col"
-            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", borderColor: colors.goldBright, backgroundColor: colors.parchment }}
+            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", borderColor: colors.goldBright, backgroundColor: colors.parchmentSoft }}
           >
             <button
               onClick={() => setFlipped(false)}
               className="absolute top-3 right-3 z-10 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md"
-              style={{ backgroundColor: colors.ink, color: colors.parchment }}
+              style={{ backgroundColor: colors.goldBright, color: colors.bark }}
             >
               ← Voir la photo
             </button>
 
             <div className="flex-1 overflow-y-auto p-6 pr-32">
               <span className="text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{product.tag}</span>
-              <h3 className="mt-1.5" style={{ ...display, color: colors.bark, fontSize: "22px" }}>{product.name}</h3>
+              <h3 className="mt-1.5" style={{ ...display, color: colors.ink, fontSize: "22px" }}>{product.name}</h3>
               <p className="mt-3 text-sm leading-relaxed whitespace-pre-line" style={{ color: colors.ink, opacity: 0.78 }}>{product.text}</p>
 
               {product.specs && product.specs.length > 0 && (
-                <ul className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "rgba(22,50,74,0.1)" }}>
+                <ul className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "rgba(240,236,224,0.15)" }}>
                   {product.specs.map((s) => (
                     <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
                       <span style={{ ...mono, color: colors.moss, letterSpacing: "0.03em" }}>{s.label}</span>
@@ -417,10 +377,10 @@ function ProductModal({ product, onClose }) {
             </div>
 
             {!product.soon && (
-              <div className="p-5 border-t flex items-center justify-between gap-3" style={{ borderColor: "rgba(22,50,74,0.12)", backgroundColor: colors.parchmentSoft }}>
-                <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: "20px" }}>{Number(product.price).toFixed(2)} €</span>
+              <div className="p-5 border-t flex items-center justify-between gap-3" style={{ borderColor: "rgba(240,236,224,0.15)", backgroundColor: colors.bark }}>
+                <span className="font-semibold" style={{ ...display, color: colors.ink, fontSize: "20px" }}>{Number(product.price).toFixed(2)} €</span>
                 {outOfStock ? (
-                  <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
+                  <span className="text-xs font-semibold" style={{ color: "#e08a7d" }}>Rupture de stock</span>
                 ) : cart[product.id] ? (
                   <div className="flex items-center gap-3">
                     <button onClick={() => removeFromCart(product.id)} className="w-8 h-8 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
@@ -428,7 +388,7 @@ function ProductModal({ product, onClose }) {
                     <button onClick={() => addToCart(product.id)} disabled={remainingStock(product.id) <= 0} className="w-8 h-8 rounded-full border font-bold disabled:opacity-40" style={{ borderColor: colors.ink, color: colors.ink }}>+</button>
                   </div>
                 ) : (
-                  <button onClick={() => addToCart(product.id)} className="rounded-full px-5 py-2.5 text-sm font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+                  <button onClick={() => addToCart(product.id)} className="rounded-full px-5 py-2.5 text-sm font-semibold" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
                     Ajouter au panier
                   </button>
                 )}
@@ -441,7 +401,6 @@ function ProductModal({ product, onClose }) {
   );
 }
 
-// ---------- Panier (contexte global) ----------
 const CartContext = createContext(null);
 const useCart = () => useContext(CartContext);
 
@@ -457,16 +416,14 @@ function CartProvider({ children }) {
   const [stock, setStock] = useState({});
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(CATEGORIES);
-  const [activeCategory, setActiveCategory] = useState(null); // null = toutes les catégories
+  const [activeCategory, setActiveCategory] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [status, setStatus] = useState("idle");
 
   useEffect(() => {
     try {
       localStorage.setItem("dv_cart", JSON.stringify(cart));
-    } catch {
-      // stockage indisponible (navigation privée stricte, etc.) -- on continue sans persistance
-    }
+    } catch {}
   }, [cart]);
 
   useEffect(() => {
@@ -556,8 +513,6 @@ function Eyebrow({ children, dark }) {
   );
 }
 
-// ---------- Nav ----------
-// ---------- Icônes réseaux (dessins simplifiés maison, pas les logos officiels) ----------
 const socialIconProps = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" };
 
 function IconInstagram(props) {
@@ -590,24 +545,27 @@ function IconDiscord(props) {
 function IconVinted(props) {
   return (
     <svg {...socialIconProps} {...props}>
-      <path d="M4 4h9l7 7-9 9-7-7V4Z" />
-      <circle cx="8.3" cy="8.3" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="5" r="1.3" />
+      <path d="M12 6.3v1.4" />
+      <path d="M12 7.7c-4.5 2.6-8 5-8 7.3 0 1.1 3.6 2 8 2s8-.9 8-2c0-2.3-3.5-4.7-8-7.3Z" />
     </svg>
   );
 }
 function IconWhatnot(props) {
   return (
     <svg {...socialIconProps} {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M10 8.3v7.4l6.2-3.7Z" fill="currentColor" stroke="none" />
+      <path d="M6 8h12l-1 12H7L6 8Z" />
+      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+      <path d="M10.5 12.5v4l3.5-2Z" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 function IconCardmarket(props) {
   return (
     <svg {...socialIconProps} {...props}>
-      <rect x="5" y="3" width="14" height="18" rx="2" />
-      <path d="M8.5 8h7M8.5 12h7M8.5 16h4" />
+      <rect x="8" y="3.3" width="11" height="15" rx="2" transform="rotate(9 13.5 11)" fill="currentColor" fillOpacity="0.12" />
+      <rect x="5" y="5" width="11" height="15" rx="2" />
+      <path d="M7.7 10.5h5.6M7.7 13.3h5.6M7.7 16.1h3.2" />
     </svg>
   );
 }
@@ -615,8 +573,8 @@ function IconCardmarket(props) {
 const SOCIAL_LINKS = [
   { name: "Instagram", Icon: IconInstagram, href: "https://www.instagram.com/dreamvalleytcg/" },
   { name: "TikTok", Icon: IconTikTok, href: "https://www.tiktok.com/@dreamvalleytcg" },
-  { name: "Discord", Icon: IconDiscord, href: "" }, // à activer une fois le serveur finalisé
-  { name: "Vinted", Icon: IconVinted, href: "" }, // à activer une fois le nouveau compte prêt
+  { name: "Discord", Icon: IconDiscord, href: "https://discord.gg/pNv9xPKGwV" },
+  { name: "Vinted", Icon: IconVinted, href: "" },
   { name: "Whatnot", Icon: IconWhatnot, href: "https://www.whatnot.com/fr-FR/user/dreavalleytcg" },
   { name: "Cardmarket", Icon: IconCardmarket, href: "https://www.cardmarket.com/fr/Pokemon/Users/DreamValleytcg" },
 ];
@@ -625,11 +583,10 @@ function NavBar() {
   const { totalCount, setDrawerOpen } = useCart();
 
   return (
-    <header className="sticky top-0 z-20 backdrop-blur border-b" style={{ backgroundColor: "rgba(245,241,230,0.88)", borderColor: "rgba(22,50,74,0.12)" }}>
+    <header className="sticky top-0 z-20 backdrop-blur border-b" style={{ backgroundColor: "rgba(13,27,42,0.92)", borderColor: "rgba(240,236,224,0.12)" }}>
       <div className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-6 py-3">
         <a href="#top" className="flex items-center shrink-0">
-          {/* Remplace /logo.svg dans public/ par ton vrai logo quand il sera prêt */}
-          <img src="/logo.svg" alt="DreamValleyTCG" className="h-9 sm:h-10 w-auto" />
+          <img src="/favicon-logo.png" alt="DreamValleyTCG" className="h-14 sm:h-16 w-auto" />
         </a>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
@@ -643,7 +600,7 @@ function NavBar() {
               className="p-1.5 sm:p-2 rounded-full transition-colors"
               style={{ color: colors.ink }}
             >
-              <Icon width={18} height={18} />
+              <Icon width={22} height={22} />
             </a>
           ))}
 
@@ -676,15 +633,15 @@ function CategoryBar() {
   }
 
   return (
-    <div className="border-t overflow-x-auto" style={{ borderColor: "rgba(22,50,74,0.1)" }}>
+    <div className="border-t overflow-x-auto" style={{ borderColor: "rgba(240,236,224,0.1)" }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-6 flex items-center gap-2 py-2.5 whitespace-nowrap">
         <button
           onClick={() => selectCategory(null)}
           className="px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors"
           style={
             activeCategory === null
-              ? { backgroundColor: colors.ink, color: colors.parchment }
-              : { backgroundColor: "transparent", color: colors.ink, border: "1px solid rgba(22,50,74,0.2)" }
+              ? { backgroundColor: colors.goldBright, color: colors.bark }
+              : { backgroundColor: "transparent", color: colors.ink, border: "1px solid rgba(240,236,224,0.25)" }
           }
         >
           Tout
@@ -696,8 +653,8 @@ function CategoryBar() {
             className="px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors"
             style={
               activeCategory === cat
-                ? { backgroundColor: colors.ink, color: colors.parchment }
-                : { backgroundColor: "transparent", color: colors.ink, border: "1px solid rgba(22,50,74,0.2)" }
+                ? { backgroundColor: colors.goldBright, color: colors.bark }
+                : { backgroundColor: "transparent", color: colors.ink, border: "1px solid rgba(240,236,224,0.25)" }
             }
           >
             {cat}
@@ -708,24 +665,23 @@ function CategoryBar() {
   );
 }
 
-// ---------- Tiroir panier ----------
 function CartDrawer() {
   const { cartItems, totalCount, total, addToCart, removeFromCart, removeItemCompletely, drawerOpen, setDrawerOpen, checkout, status, remainingStock } = useCart();
 
   return (
     <>
-      {drawerOpen && <div className="fixed inset-0 z-30" style={{ backgroundColor: "rgba(13,27,42,0.5)" }} onClick={() => setDrawerOpen(false)} />}
+      {drawerOpen && <div className="fixed inset-0 z-30" style={{ backgroundColor: "rgba(13,27,42,0.6)" }} onClick={() => setDrawerOpen(false)} />}
       <aside
         className="fixed top-0 right-0 h-full z-40 flex flex-col transition-transform duration-300"
         style={{
           width: "min(420px, 100vw)",
-          backgroundColor: colors.parchment,
+          backgroundColor: colors.parchmentSoft,
           transform: drawerOpen ? "translateX(0)" : "translateX(100%)",
-          boxShadow: drawerOpen ? "-8px 0 24px rgba(13,27,42,0.2)" : "none",
+          boxShadow: drawerOpen ? "-8px 0 24px rgba(13,27,42,0.4)" : "none",
         }}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: "rgba(22,50,74,0.12)" }}>
-          <h3 style={{ ...display, color: colors.bark, fontSize: "20px" }}>Ton panier</h3>
+        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: "rgba(240,236,224,0.12)" }}>
+          <h3 style={{ ...display, color: colors.ink, fontSize: "20px" }}>Ton panier</h3>
           <button onClick={() => setDrawerOpen(false)} style={{ color: colors.ink }} aria-label="Fermer">
             <X size={22} />
           </button>
@@ -738,10 +694,10 @@ function CartDrawer() {
             </p>
           ) : (
             cartItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 py-4 border-b" style={{ borderColor: "rgba(22,50,74,0.08)" }}>
+              <div key={item.id} className="flex items-center gap-3 py-4 border-b" style={{ borderColor: "rgba(240,236,224,0.08)" }}>
                 <ProductImage images={item.images} className="w-14 h-14 rounded-lg shrink-0" alt={item.name} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: colors.bark }}>{item.name}</p>
+                  <p className="text-sm font-semibold truncate" style={{ color: colors.ink }}>{item.name}</p>
                   <p className="text-xs mt-0.5" style={{ ...mono, color: colors.moss }}>{item.price.toFixed(2)} €</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -756,7 +712,7 @@ function CartDrawer() {
                     onClick={() => removeItemCompletely(item.id)}
                     aria-label={`Retirer ${item.name} du panier`}
                     className="w-6 h-6 rounded-full flex items-center justify-center ml-1"
-                    style={{ color: "#b3413a" }}
+                    style={{ color: "#e08a7d" }}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -767,21 +723,21 @@ function CartDrawer() {
         </div>
 
         {cartItems.length > 0 && (
-          <div className="px-6 py-5 border-t" style={{ borderColor: "rgba(22,50,74,0.12)" }}>
+          <div className="px-6 py-5 border-t" style={{ borderColor: "rgba(240,236,224,0.12)" }}>
             <div className="flex items-center justify-between mb-4">
               <span style={{ color: colors.ink, opacity: 0.7 }} className="text-sm">Total ({totalCount} article{totalCount > 1 ? "s" : ""})</span>
-              <span style={{ ...display, color: colors.bark, fontSize: "20px" }}>{total.toFixed(2)} €</span>
+              <span style={{ ...display, color: colors.ink, fontSize: "20px" }}>{total.toFixed(2)} €</span>
             </div>
             <button
               onClick={checkout}
               disabled={status === "loading"}
               className="w-full rounded-full px-6 py-3 text-sm font-semibold disabled:opacity-60"
-              style={{ backgroundColor: colors.ink, color: colors.parchment }}
+              style={{ backgroundColor: colors.goldBright, color: colors.bark }}
             >
               {status === "loading" ? "Redirection..." : "Payer en sécurité"}
             </button>
             {status === "error" && (
-              <p className="mt-3 text-xs" style={{ color: "#b3413a" }}>Une erreur est survenue, réessaie dans un instant.</p>
+              <p className="mt-3 text-xs" style={{ color: "#e08a7d" }}>Une erreur est survenue, réessaie dans un instant.</p>
             )}
           </div>
         )}
@@ -803,24 +759,24 @@ function Hero() {
         </Reveal>
 
         <Reveal delay={100}>
-          <Eyebrow>DreamValleyTCG — Revendeur indépendant</Eyebrow>
+          <Eyebrow>DreamValleyTCG — Boutique professionnelle</Eyebrow>
         </Reveal>
         <Reveal delay={180}>
-          <h1 className="mt-4 max-w-xl" style={{ ...display, fontWeight: 600, fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.08, color: colors.bark }}>
-            Chaque produit a une histoire <span style={{ fontStyle: "italic", color: colors.moss, fontWeight: 500 }}>avant</span> d'arriver chez vous.
+          <h1 className="mt-4 max-w-xl" style={{ ...display, fontWeight: 600, fontSize: "clamp(38px,6vw,64px)", lineHeight: 1.08, color: colors.ink }}>
+            DreamValleyTCG, là où <span style={{ fontStyle: "italic", color: colors.tealGlow, fontWeight: 500 }}>commence</span> votre aventure.
           </h1>
         </Reveal>
         <Reveal delay={260}>
-          <p className="mt-5 max-w-md text-lg" style={{ color: colors.ink, opacity: 0.85 }}>
-            Nous sélectionnons et vérifions des produits Pokémon TCG scellés, pour que chaque commande soit une découverte — jamais un pari.
+          <p className="mt-5 max-w-md text-lg" style={{ color: colors.ink, opacity: 0.8 }}>
+            Nous sommes un couple passionné par l'univers des cartes à collectionner. Que vous soyez collectionneur ou joueur invétéré, DreamValleyTCG vous accompagne dans votre quête de cartes et de souvenirs uniques.
           </p>
         </Reveal>
         <Reveal delay={340}>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#catalogue" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline transition-transform hover:-translate-y-0.5" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+            <a href="#catalogue" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline transition-transform hover:-translate-y-0.5" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
               Voir le catalogue
             </a>
-            <a href="#communaute" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline border-2 transition-transform hover:-translate-y-0.5" style={{ borderColor: colors.ink, color: colors.ink }}>
+            <a href="https://discord.gg/pNv9xPKGwV" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline border-2 transition-transform hover:-translate-y-0.5" style={{ borderColor: colors.ink, color: colors.ink }}>
               Rejoindre le Discord
             </a>
           </div>
@@ -832,25 +788,26 @@ function Hero() {
 
 function Principles() {
   const items = [
-    { icon: Check, title: "Authenticité vérifiée", text: "Chaque scellé est contrôlé avant expédition — poids, hologramme, numéro de lot. Un doute, et le produit ne part pas." },
-    { icon: ShieldCheck, title: "Transparence totale", text: "Bons comme mauvais tirages sont montrés, jamais cachés. Le marché mérite des chiffres réels, pas une vitrine triée." },
-    { icon: Users, title: "Communauté avant tout", text: "Les infos et alertes marché sont partagées avec la communauté avant d'être exploitées commercialement." },
+    { icon: Check, title: "Produits officiels", text: "Produits 100 % officiels, préparés avec soin, contrôlés puis expédiés sous 2 jours ouvrés." },
+    { icon: ShieldCheck, title: "Transparence totale", text: "Une question, un doute ? Pose-la sur notre Discord, on te répond en toute transparence." },
+    { icon: Users, title: "Notre communauté avant tout", text: "Plus vous commandez, plus vous progressez avec nous — jusqu'à débloquer des réductions fidélité." },
+    { icon: Bell, title: "Avant-première sur Discord", text: "Chaque nouveauté est annoncée sur le Discord avant sa mise en ligne sur le site — tu es toujours prévenu en premier." }
   ];
   return (
     <section className="max-w-6xl mx-auto px-5 sm:px-6 py-16 sm:py-20">
       <Reveal>
         <div className="max-w-xl mb-12">
-          <Eyebrow>Ce qui guide chaque envoi</Eyebrow>
-          <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.bark }}>Trois principes, aucun compromis.</h2>
+          <Eyebrow>Nos ambitions, vos rêves</Eyebrow>
+          <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.ink }}>Nos principes</h2>
         </div>
       </Reveal>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7">
         {items.map(({ icon: Icon, title, text }, i) => (
           <Reveal key={title} delay={i * 100}>
-            <div className="rounded-2xl p-7 border h-full transition-transform hover:-translate-y-1" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.1)" }}>
-              <Icon size={28} color={colors.ink} strokeWidth={2.2} />
-              <h3 className="mt-4 text-lg font-semibold" style={{ color: colors.bark }}>{title}</h3>
-              <p className="mt-2 text-sm" style={{ color: colors.ink, opacity: 0.78 }}>{text}</p>
+            <div className="rounded-2xl p-7 border h-full transition-transform hover:-translate-y-1" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
+              <Icon size={28} color={colors.goldBright} strokeWidth={2.2} />
+              <h3 className="mt-4 text-lg font-semibold" style={{ color: colors.ink }}>{title}</h3>
+              <p className="mt-2 text-sm" style={{ color: colors.ink, opacity: 0.72 }}>{text}</p>
             </div>
           </Reveal>
         ))}
@@ -871,9 +828,9 @@ function CatalogueCard({ p, onOpenModal }) {
       </span>
     ) : (
       <div className="flex items-center justify-between gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
-        <span className="font-semibold" style={{ ...display, color: colors.bark, fontSize: size === "small" ? "16px" : "18px" }}>{p.price.toFixed(2)} €</span>
+        <span className="font-semibold" style={{ ...display, color: colors.ink, fontSize: size === "small" ? "16px" : "18px" }}>{p.price.toFixed(2)} €</span>
         {outOfStock ? (
-          <span className="text-xs font-semibold" style={{ color: "#b3413a" }}>Rupture de stock</span>
+          <span className="text-xs font-semibold" style={{ color: "#e08a7d" }}>Rupture de stock</span>
         ) : cart[p.id] ? (
           <div className="flex items-center gap-3">
             <button onClick={() => removeFromCart(p.id)} className="w-7 h-7 rounded-full border font-bold" style={{ borderColor: colors.ink, color: colors.ink }}>−</button>
@@ -881,7 +838,7 @@ function CatalogueCard({ p, onOpenModal }) {
             <button onClick={() => addToCart(p.id)} disabled={remainingStock(p.id) <= 0} className="w-7 h-7 rounded-full border font-bold disabled:opacity-40" style={{ borderColor: colors.ink, color: colors.ink }}>+</button>
           </div>
         ) : (
-          <button onClick={() => addToCart(p.id)} className="rounded-full px-4 py-2 text-xs font-semibold transition-transform hover:-translate-y-0.5" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+          <button onClick={() => addToCart(p.id)} className="rounded-full px-4 py-2 text-xs font-semibold transition-transform hover:-translate-y-0.5" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
             Ajouter au panier
           </button>
         )}
@@ -889,59 +846,57 @@ function CatalogueCard({ p, onOpenModal }) {
     );
 
   return (
-    <div className="relative w-full" style={{ height: "580px", perspective: "1500px" }}>
+    <div className="relative w-full" style={{ height: "700px", perspective: "1500px" }}>
       <div
         className="relative w-full transition-transform duration-700"
-        style={{ height: "580px", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+        style={{ height: "700px", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
       >
-        {/* Face avant -- aperçu */}
         <div
           className="absolute inset-0 rounded-2xl border flex flex-col overflow-hidden cursor-pointer transition-shadow hover:shadow-lg"
-          style={{ backfaceVisibility: "hidden", backgroundColor: colors.parchment, borderColor: "rgba(22,50,74,0.1)", opacity: p.soon ? 0.75 : 1 }}
+          style={{ backfaceVisibility: "hidden", backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)", opacity: p.soon ? 0.75 : 1 }}
           onClick={() => onOpenModal(p)}
         >
           <div className="relative shrink-0">
-            <ProductImage images={p.images} className="w-full h-72 sm:h-80" zoomable alt={p.name} />
+            <ProductImage images={p.images} className="w-full h-[440px] sm:h-[460px]" zoomable alt={p.name} />
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setFlipped(true);
               }}
               className="absolute top-3 right-3 z-10 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md"
-              style={{ backgroundColor: "rgba(13,27,42,0.75)", color: colors.parchment }}
+              style={{ backgroundColor: "rgba(13,27,42,0.8)", color: colors.ink }}
             >
               Voir détails
             </button>
           </div>
-          <span className="px-6 pt-5 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
-          <h3 className="px-6 pt-2 text-xl" style={{ ...display, color: colors.bark }}>{p.name}</h3>
-          <p className="px-6 pt-2 text-sm line-clamp-3 whitespace-pre-line" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
+          <span className="px-6 pt-4 text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
+          <h3 className="px-6 pt-1.5 text-xl" style={{ ...display, color: colors.ink }}>{p.name}</h3>
+          <p className="px-6 pt-1.5 text-sm line-clamp-2 whitespace-pre-line" style={{ color: colors.ink, opacity: 0.7 }}>{p.text}</p>
 
-          <div className="px-6 pb-6 pt-4">
+          <div className="px-6 pb-5 pt-3">
             <CartControls />
           </div>
         </div>
 
-        {/* Face arrière -- détails complets */}
         <div
           className="absolute inset-0 rounded-2xl border flex flex-col overflow-hidden"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", backgroundColor: colors.parchment, borderColor: colors.goldBright }}
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", backgroundColor: colors.parchmentSoft, borderColor: colors.goldBright }}
         >
           <button
             onClick={() => setFlipped(false)}
             className="absolute top-3 right-3 z-10 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md"
-            style={{ backgroundColor: colors.ink, color: colors.parchment }}
+            style={{ backgroundColor: colors.goldBright, color: colors.bark }}
           >
             ← Retour
           </button>
 
           <div className="flex-1 overflow-y-auto p-6 pr-24">
             <span className="text-xs uppercase" style={{ ...mono, color: colors.gold, letterSpacing: "0.1em" }}>{p.tag}</span>
-            <h3 className="mt-1.5" style={{ ...display, color: colors.bark, fontSize: "20px" }}>{p.name}</h3>
-            <p className="mt-3 text-sm leading-relaxed whitespace-pre-line" style={{ color: colors.ink, opacity: 0.8 }}>{p.text}</p>
+            <h3 className="mt-1.5" style={{ ...display, color: colors.ink, fontSize: "20px" }}>{p.name}</h3>
+            <p className="mt-3 text-sm leading-relaxed whitespace-pre-line" style={{ color: colors.ink, opacity: 0.75 }}>{p.text}</p>
 
             {p.specs && p.specs.length > 0 && (
-              <ul className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "rgba(22,50,74,0.1)" }}>
+              <ul className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "rgba(240,236,224,0.12)" }}>
                 {p.specs.map((s) => (
                   <li key={s.label} className="flex items-center justify-between gap-3 text-xs">
                     <span style={{ ...mono, color: colors.moss, letterSpacing: "0.03em" }}>{s.label}</span>
@@ -952,7 +907,7 @@ function CatalogueCard({ p, onOpenModal }) {
             )}
           </div>
 
-          <div className="p-5 border-t" style={{ borderColor: "rgba(22,50,74,0.12)", backgroundColor: colors.parchmentSoft }}>
+          <div className="p-5 border-t" style={{ borderColor: "rgba(240,236,224,0.12)", backgroundColor: colors.bark }}>
             <CartControls size="small" />
           </div>
         </div>
@@ -965,8 +920,6 @@ function Catalogue() {
   const { products, activeCategory, categories } = useCart();
   const [activeProduct, setActiveProduct] = useState(null);
 
-  // Si quelqu'un arrive directement sur /produit/un-slug (lien partagé, résultat Google...),
-  // on ouvre automatiquement la fiche correspondante une fois le catalogue chargé.
   useEffect(() => {
     if (products.length === 0) return;
     const match = window.location.pathname.match(/^\/produit\/([a-z0-9-]+)\/?$/);
@@ -980,12 +933,12 @@ function Catalogue() {
   const isEmptyCategory = activeCategory && products.length > 0 && filtered.length === 0;
 
   return (
-    <section id="catalogue" className="py-16 sm:py-20" style={{ backgroundColor: colors.parchmentSoft }}>
+    <section id="catalogue" className="py-16 sm:py-20" style={{ backgroundColor: colors.parchment }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
         <Reveal>
           <div className="max-w-xl mb-9 sm:mb-11">
             <Eyebrow>{activeCategory || "Ce que l'on propose"}</Eyebrow>
-            <h2 className="mt-3" style={{ ...display, fontSize: "clamp(26px,4vw,38px)", color: colors.bark }}>
+            <h2 className="mt-3" style={{ ...display, fontSize: "clamp(26px,4vw,38px)", color: colors.ink }}>
               {activeCategory ? activeCategory : "Le catalogue, en bref."}
             </h2>
           </div>
@@ -997,9 +950,9 @@ function Catalogue() {
 
         {isEmptyCategory && (
           <Reveal>
-            <div className="rounded-2xl border border-dashed p-10 text-center" style={{ borderColor: colors.moss, backgroundColor: colors.parchment }}>
-              <p style={{ ...display, color: colors.bark, fontSize: "22px" }}>Bientôt disponible</p>
-              <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: colors.ink, opacity: 0.75 }}>
+            <div className="rounded-2xl border border-dashed p-10 text-center" style={{ borderColor: colors.moss, backgroundColor: colors.parchmentSoft }}>
+              <p style={{ ...display, color: colors.ink, fontSize: "22px" }}>Bientôt disponible</p>
+              <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: colors.ink, opacity: 0.7 }}>
                 Les {activeCategory?.toLowerCase()} arrivent prochainement — reviens jeter un œil bientôt, ou rejoins le Discord pour être prévenu en avant-première.
               </p>
             </div>
@@ -1022,7 +975,7 @@ function Catalogue() {
 
 function Community() {
   const links = [
-    { name: "Discord", role: "Communauté & annonces", href: "" },
+    { name: "Discord", role: "Communauté & annonces", href: "https://discord.gg/pNv9xPKGwV" },
     { name: "Whatnot", role: "Lives & ventes en direct", href: "https://www.whatnot.com/fr-FR/user/dreavalleytcg" },
     { name: "Cardmarket", role: "Vente à l'unité", href: "https://www.cardmarket.com/fr/Pokemon/Users/DreamValleytcg" },
     { name: "Instagram", role: "Coulisses & annonces", href: "https://www.instagram.com/dreamvalleytcg/" },
@@ -1033,14 +986,14 @@ function Community() {
     <section id="communaute" className="py-16 sm:py-20" style={{ backgroundColor: colors.bark }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
         <Reveal>
-          <Eyebrow dark>Où nous retrouver</Eyebrow>
-          <h2 className="mt-3 max-w-md" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.parchment }}>La boutique ne dort jamais sur une seule plateforme.</h2>
-          <p className="mt-4 max-w-lg" style={{ color: colors.parchment, opacity: 0.72 }}>Chaque canal a un rôle précis — des lives aux échanges quotidiens avec la communauté.</p>
+          <Eyebrow dark>Nos réseaux</Eyebrow>
+          <h2 className="mt-3 max-w-md" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.ink }}>La boutique ne dort jamais, retrouvez-nous sur nos réseaux !</h2>
+          <p className="mt-4 max-w-lg" style={{ color: colors.ink, opacity: 0.72 }}>Ouvertures, live, giveway, tout ce passe en dessous.</p>
         </Reveal>
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {links.filter((l) => l.href).map((l, i) => (
             <Reveal key={l.name} delay={(i % 4) * 80}>
-              <a href={l.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-2xl px-5 py-4 no-underline border transition-colors hover:border-opacity-60" style={{ borderColor: "rgba(245,241,230,0.18)", color: colors.parchment }}>
+              <a href={l.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-2xl px-5 py-4 no-underline border transition-colors hover:border-opacity-60" style={{ borderColor: "rgba(240,236,224,0.18)", color: colors.ink }}>
                 <span>
                   <span className="block font-semibold text-[15px]">{l.name}</span>
                   <span className="block mt-0.5 text-[11px]" style={{ ...mono, color: colors.tealGlow, letterSpacing: "0.04em" }}>{l.role}</span>
@@ -1057,14 +1010,14 @@ function Community() {
 
 function Footer() {
   return (
-    <footer className="py-10" style={{ backgroundColor: colors.bark, borderTop: "1px solid rgba(245,241,230,0.12)" }}>
+    <footer className="py-10" style={{ backgroundColor: colors.bark, borderTop: "1px solid rgba(240,236,224,0.12)" }}>
       <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-start justify-between gap-4">
-        <span style={{ ...display, fontStyle: "italic", fontWeight: 600, color: colors.parchment }}>DreamValleyTCG</span>
+        <span style={{ ...display, fontStyle: "italic", fontWeight: 600, color: colors.ink }}>DreamValleyTCG</span>
         <div className="flex flex-col items-start sm:items-end gap-2">
-          <a href="/mentions-legales" className="text-xs no-underline" style={{ color: "rgba(245,241,230,0.7)" }}>
+          <a href="/mentions-legales" className="text-xs no-underline" style={{ color: "rgba(240,236,224,0.7)" }}>
             Mentions légales · CGV · Confidentialité
           </a>
-          <p className="max-w-md text-xs leading-relaxed" style={{ color: "rgba(245,241,230,0.55)" }}>
+          <p className="max-w-md text-xs leading-relaxed" style={{ color: "rgba(240,236,224,0.5)" }}>
             Revendeur indépendant de produits Pokémon TCG scellés. Aucune affiliation avec The Pokémon Company, Nintendo, Game Freak ou Asmodée. © 2026 DreamValleyTCG.
           </p>
         </div>
@@ -1073,7 +1026,6 @@ function Footer() {
   );
 }
 
-// ---------- Page Admin (cachée, protégée par mot de passe) ----------
 function AdminPage() {
   const [token, setToken] = useState(() => sessionStorage.getItem("dv_admin_token") || "");
   const [password, setPassword] = useState("");
@@ -1276,13 +1228,13 @@ function AdminPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-5" style={{ backgroundColor: colors.bark }}>
         <div className="w-full max-w-sm">
-          <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-4" style={{ color: colors.parchment, opacity: 0.7 }}>
+          <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-4" style={{ color: colors.ink, opacity: 0.7 }}>
             <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
           </a>
-          <form onSubmit={handleLogin} className="p-8 rounded-2xl" style={{ backgroundColor: colors.parchment }}>
+          <form onSubmit={handleLogin} className="p-8 rounded-2xl" style={{ backgroundColor: colors.parchmentSoft }}>
             <div className="flex items-center gap-2 mb-6">
               <Lock size={20} color={colors.ink} />
-              <h1 style={{ ...display, color: colors.bark, fontSize: "22px" }}>Administration</h1>
+              <h1 style={{ ...display, color: colors.ink, fontSize: "22px" }}>Administration</h1>
             </div>
             <input
               type="password"
@@ -1290,10 +1242,10 @@ function AdminPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mot de passe"
               className="w-full px-4 py-3 rounded-lg border mb-4"
-              style={{ borderColor: "rgba(22,50,74,0.2)", backgroundColor: "#fff" }}
+              style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
             />
-            {error && <p className="text-sm mb-4" style={{ color: "#b3413a" }}>{error}</p>}
-            <button type="submit" className="w-full rounded-full px-6 py-3 text-sm font-semibold" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+            {error && <p className="text-sm mb-4" style={{ color: "#e08a7d" }}>{error}</p>}
+            <button type="submit" className="w-full rounded-full px-6 py-3 text-sm font-semibold" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
               Se connecter
             </button>
           </form>
@@ -1309,7 +1261,7 @@ function AdminPage() {
           <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
         </a>
         <div className="flex items-center justify-between flex-wrap gap-3 mb-8">
-          <h1 style={{ ...display, color: colors.bark, fontSize: "28px" }}>Catalogue & stock</h1>
+          <h1 style={{ ...display, color: colors.ink, fontSize: "28px" }}>Catalogue & stock</h1>
           <button
             onClick={() => {
               if (showAddForm) {
@@ -1321,29 +1273,29 @@ function AdminPage() {
               }
             }}
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold"
-            style={{ backgroundColor: colors.ink, color: colors.parchment }}
+            style={{ backgroundColor: colors.goldBright, color: colors.bark }}
           >
             <Plus size={14} /> {showAddForm ? "Annuler" : "Ajouter un produit"}
           </button>
         </div>
 
         {showAddForm && (
-          <form onSubmit={handleSubmitProduct} className="mb-8 p-6 rounded-xl border space-y-3" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.15)" }}>
-            <p className="text-sm font-semibold" style={{ color: colors.bark }}>
+          <form onSubmit={handleSubmitProduct} className="mb-8 p-6 rounded-xl border space-y-3" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.15)" }}>
+            <p className="text-sm font-semibold" style={{ color: colors.ink }}>
               {editingId ? "Modifier le produit" : "Nouveau produit"}
             </p>
-            <input placeholder="Nom du produit *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
-            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }}>
+            <input placeholder="Nom du produit *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}>
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
             <div className="flex gap-3 flex-wrap">
-              <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
-              <input placeholder="Poids en grammes (ex: 1400)" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className="flex-1 min-w-[160px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
-              <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+              <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+              <input placeholder="Poids en grammes (ex: 1400)" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className="flex-1 min-w-[160px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+              <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
             </div>
-            <textarea placeholder={"Description (utilise Entrée pour aller à la ligne, ex: séparer les points par des retours à la ligne)"} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={4} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.2)" }} />
+            <textarea placeholder={"Description (utilise Entrée pour aller à la ligne, ex: séparer les points par des retours à la ligne)"} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={4} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
 
             <div>
               <label className="text-xs font-semibold block mb-1.5" style={{ color: colors.ink }}>
@@ -1353,8 +1305,8 @@ function AdminPage() {
               {form.images.length > 0 && (
                 <div className="space-y-2 mb-3">
                   {form.images.map((url, i) => (
-                    <div key={`${url}-${i}`} className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: "rgba(22,50,74,0.15)", backgroundColor: colors.parchment }}>
-                      <div className="w-12 h-12 rounded-md overflow-hidden shrink-0" style={{ backgroundColor: colors.parchmentSoft }}>
+                    <div key={`${url}-${i}`} className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.2)", backgroundColor: colors.parchment }}>
+                      <div className="w-12 h-12 rounded-md overflow-hidden shrink-0" style={{ backgroundColor: colors.bark }}>
                         <img src={url} alt="" className="w-full h-full object-cover" />
                       </div>
                       <span className="text-xs flex-1 truncate" style={{ ...mono, color: colors.moss }}>{url}</span>
@@ -1364,7 +1316,7 @@ function AdminPage() {
                       <button type="button" onClick={() => moveImage(i, 1)} disabled={i === form.images.length - 1} className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30" style={{ color: colors.ink }} aria-label="Descendre">
                         <ChevronDown size={16} />
                       </button>
-                      <button type="button" onClick={() => removeImage(i)} className="w-6 h-6 rounded flex items-center justify-center" style={{ color: "#b3413a" }} aria-label="Retirer">
+                      <button type="button" onClick={() => removeImage(i)} className="w-6 h-6 rounded flex items-center justify-center" style={{ color: "#e08a7d" }} aria-label="Retirer">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -1379,6 +1331,7 @@ function AdminPage() {
                 onChange={handleFileUpload}
                 disabled={uploading}
                 className="w-full text-sm mb-2"
+                style={{ color: colors.ink }}
               />
               {uploading && <p className="text-xs mb-2" style={{ color: colors.moss }}>Envoi en cours...</p>}
 
@@ -1394,9 +1347,9 @@ function AdminPage() {
                     }
                   }}
                   className="flex-1 px-3 py-2 rounded-lg border text-sm"
-                  style={{ borderColor: "rgba(22,50,74,0.2)" }}
+                  style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
                 />
-                <button type="button" onClick={addImageUrl} className="rounded-lg px-3 py-2 text-xs font-semibold" style={{ backgroundColor: colors.parchmentSoft, color: colors.ink, border: "1px solid rgba(22,50,74,0.2)" }}>
+                <button type="button" onClick={addImageUrl} className="rounded-lg px-3 py-2 text-xs font-semibold" style={{ backgroundColor: colors.parchment, color: colors.ink, border: "1px solid rgba(240,236,224,0.25)" }}>
                   Ajouter
                 </button>
               </div>
@@ -1408,14 +1361,14 @@ function AdminPage() {
               onChange={(e) => setForm({ ...form, specsText: e.target.value })}
               rows={3}
               className="w-full px-3 py-2 rounded-lg border"
-              style={{ borderColor: "rgba(22,50,74,0.2)" }}
+              style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
             />
             <label className="flex items-center gap-2 text-sm" style={{ color: colors.ink }}>
               <input type="checkbox" checked={form.soon} onChange={(e) => setForm({ ...form, soon: e.target.checked })} />
               Produit "à venir" (pas encore en vente, sans prix ni ajout au panier)
             </label>
-            {addError && <p className="text-sm" style={{ color: "#b3413a" }}>{addError}</p>}
-            <button type="submit" disabled={adding} className="rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: colors.ink, color: colors.parchment }}>
+            {addError && <p className="text-sm" style={{ color: "#e08a7d" }}>{addError}</p>}
+            <button type="submit" disabled={adding} className="rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
               {adding ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Créer le produit"}
             </button>
           </form>
@@ -1423,11 +1376,11 @@ function AdminPage() {
 
         <div className="space-y-4">
           {products.map((p) => (
-            <div key={p.id} className="flex items-center justify-between flex-wrap gap-3 p-5 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(22,50,74,0.1)" }}>
+            <div key={p.id} className="flex items-center justify-between flex-wrap gap-3 p-5 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
               <div className="flex items-center gap-3 min-w-0">
                 <ProductImage images={p.images} className="w-12 h-12 rounded-lg shrink-0" alt={p.name} />
                 <div className="min-w-0">
-                  <p className="font-semibold truncate" style={{ color: colors.bark }}>{p.name}</p>
+                  <p className="font-semibold truncate" style={{ color: colors.ink }}>{p.name}</p>
                   <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}{p.weight ? ` · ${p.weight} g` : ""}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: colors.gold }}>{p.category || "Sans catégorie"}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: colors.moss }}>
@@ -1444,14 +1397,14 @@ function AdminPage() {
                       value={stock[p.id] ?? ""}
                       onChange={(e) => setStock((s) => ({ ...s, [p.id]: Number(e.target.value) }))}
                       className="w-20 px-3 py-2 rounded-lg border text-center"
-                      style={{ borderColor: "rgba(22,50,74,0.2)" }}
+                      style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
                       placeholder="—"
                     />
                     <button
                       onClick={() => updateStock(p.id, stock[p.id] ?? 0)}
                       disabled={saving[p.id]}
                       className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60"
-                      style={{ backgroundColor: colors.ink, color: colors.parchment }}
+                      style={{ backgroundColor: colors.goldBright, color: colors.bark }}
                     >
                       {saving[p.id] ? "..." : "Enregistrer"}
                     </button>
@@ -1468,7 +1421,7 @@ function AdminPage() {
                   onClick={() => handleDeleteProduct(p.id)}
                   disabled={deleting[p.id]}
                   className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60 border"
-                  style={{ borderColor: "#b3413a", color: "#b3413a" }}
+                  style={{ borderColor: "#e08a7d", color: "#e08a7d" }}
                 >
                   {deleting[p.id] ? "..." : "Supprimer"}
                 </button>
@@ -1487,7 +1440,6 @@ function AdminPage() {
   );
 }
 
-// ---------- Numéro masqué (anti-scraping bots) ----------
 function PhoneReveal({ number }) {
   const [revealed, setRevealed] = useState(false);
   if (revealed) {
@@ -1508,12 +1460,11 @@ function PhoneReveal({ number }) {
   );
 }
 
-// ---------- Mentions légales / CGV / Confidentialité ----------
 function LegalPage() {
   const Section = ({ id, title, children }) => (
     <div id={id} className="mb-12 scroll-mt-24">
-      <h2 style={{ ...display, color: colors.bark, fontSize: "22px" }} className="mb-4">{title}</h2>
-      <div className="space-y-3 text-sm leading-relaxed" style={{ color: colors.ink, opacity: 0.85 }}>
+      <h2 style={{ ...display, color: colors.ink, fontSize: "22px" }} className="mb-4">{title}</h2>
+      <div className="space-y-3 text-sm leading-relaxed" style={{ color: colors.ink, opacity: 0.8 }}>
         {children}
       </div>
     </div>
@@ -1526,7 +1477,7 @@ function LegalPage() {
           <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
         </a>
 
-        <h1 style={{ ...display, color: colors.bark, fontSize: "32px" }} className="mb-2">Informations légales</h1>
+        <h1 style={{ ...display, color: colors.ink, fontSize: "32px" }} className="mb-2">Informations légales</h1>
         <p className="text-sm mb-10" style={{ color: colors.moss }}>
           <a href="#mentions" style={{ color: colors.moss }}>Mentions légales</a> · <a href="#cgv" style={{ color: colors.moss }}>CGV</a> · <a href="#retractation" style={{ color: colors.moss }}>Droit de rétractation</a> · <a href="#confidentialite" style={{ color: colors.moss }}>Confidentialité</a>
         </p>
@@ -1573,19 +1524,17 @@ function SuccessPage() {
   useEffect(() => {
     try {
       localStorage.removeItem("dv_cart");
-    } catch {
-      // rien à faire si le stockage est indisponible
-    }
+    } catch {}
   }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: colors.parchment }}>
       <div className="max-w-md text-center">
-        <div className="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.ink }}>
-          <CheckCircle2 size={32} color={colors.parchment} />
+        <div className="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.goldBright }}>
+          <CheckCircle2 size={32} color={colors.bark} />
         </div>
         <Eyebrow>Commande confirmée</Eyebrow>
-        <h1 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,36px)", color: colors.bark }}>
+        <h1 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,36px)", color: colors.ink }}>
           Merci pour ta commande.
         </h1>
         <p className="mt-4 text-base" style={{ color: colors.ink, opacity: 0.8 }}>
@@ -1594,7 +1543,7 @@ function SuccessPage() {
         <a
           href="/"
           className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8"
-          style={{ backgroundColor: colors.ink, color: colors.parchment }}
+          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
         >
           Retour à l'accueil
         </a>
@@ -1611,7 +1560,7 @@ function CancelPage() {
           <XCircle size={32} color={colors.ink} />
         </div>
         <Eyebrow>Paiement annulé</Eyebrow>
-        <h1 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,36px)", color: colors.bark }}>
+        <h1 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,36px)", color: colors.ink }}>
           Aucun souci, rien n'a été débité.
         </h1>
         <p className="mt-4 text-base" style={{ color: colors.ink, opacity: 0.8 }}>
@@ -1620,7 +1569,7 @@ function CancelPage() {
         <a
           href="/#catalogue"
           className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8"
-          style={{ backgroundColor: colors.ink, color: colors.parchment }}
+          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
         >
           Retour au catalogue
         </a>
@@ -1629,7 +1578,6 @@ function CancelPage() {
   );
 }
 
-// ---------- Racine ----------
 export default function DreamValleySite() {
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
 
