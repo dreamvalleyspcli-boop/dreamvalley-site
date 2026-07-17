@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Code2, Mail, Search, Truck } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Code2, Mail, Search, Truck, Star } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
@@ -606,6 +606,14 @@ function NavBar() {
 
         {/* Desktop : icônes + libellés inline, inchangé */}
         <div className="hidden sm:flex items-end gap-3 flex-wrap justify-end">
+          <a
+            href="/avis"
+            className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline"
+            style={{ color: colors.ink }}
+          >
+            <Star width={20} height={20} />
+            <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>Avis</span>
+          </a>
           {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
             <a
               key={name}
@@ -631,6 +639,10 @@ function NavBar() {
       {/* Mobile : bande d'icônes dédiée, défilement horizontal */}
       <div className="sm:hidden border-t overflow-x-auto" style={{ borderColor: "rgba(240,236,224,0.1)" }}>
         <div className="flex items-center gap-4 px-5 py-2 whitespace-nowrap">
+          <a href="/avis" className="flex flex-col items-center gap-1 shrink-0 no-underline" style={{ color: colors.ink }}>
+            <Star width={19} height={19} />
+            <span className="text-[9px] font-semibold leading-none" style={mono}>Avis</span>
+          </a>
           {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
             <a
               key={name}
@@ -1046,6 +1058,9 @@ function Footer() {
           <a href="/mentions-legales" className="text-xs no-underline" style={{ color: "rgba(240,236,224,0.7)" }}>
             Mentions légales · CGV · Confidentialité
           </a>
+          <p className="max-w-md text-xs leading-relaxed" style={{ color: "rgba(240,236,224,0.5)" }}>
+            Revendeur indépendant de produits Pokémon TCG scellés. Aucune affiliation avec The Pokémon Company, Nintendo, Game Freak ou Asmodée. © 2026 DreamValleyTCG.
+          </p>
         </div>
       </div>
     </footer>
@@ -1507,6 +1522,154 @@ function AdminPage() {
         <p className="text-xs mt-8" style={{ color: colors.ink, opacity: 0.6 }}>
           Stock : laisse le champ vide = non suivi (toujours disponible). Mets 0 pour afficher "Rupture de stock".
         </p>
+
+        <ReviewsAdmin token={token} />
+      </div>
+    </div>
+  );
+}
+
+function ReviewsAdmin({ token }) {
+  const [reviews, setReviews] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [deleting, setDeleting] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ author: "", rating: "5", text: "", date: "", source: "" });
+
+  useEffect(() => {
+    if (token) {
+      fetch(`${CHECKOUT_API_URL}/api/reviews`).then((r) => r.json()).then(setReviews).catch(() => {});
+    }
+  }, [token]);
+
+  function resetForm() {
+    setForm({ author: "", rating: "5", text: "", date: "", source: "" });
+    setEditingId(null);
+    setError("");
+  }
+
+  function startEdit(r) {
+    setForm({ author: r.author, rating: String(r.rating), text: r.text, date: r.date || "", source: r.source || "" });
+    setEditingId(r.id);
+    setError("");
+    setShowForm(true);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    if (!form.author.trim() || !form.text.trim()) {
+      setError("Le nom et le texte de l'avis sont requis.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const endpoint = editingId ? "/api/admin/reviews/edit" : "/api/admin/reviews/add";
+      const payload = { author: form.author.trim(), rating: form.rating, text: form.text.trim(), date: form.date, source: form.source.trim() };
+      if (editingId) payload.id = editingId;
+
+      const res = await fetch(`${CHECKOUT_API_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setReviews(data);
+        resetForm();
+        setShowForm(false);
+      } else {
+        setError(data.error || "Erreur lors de l'enregistrement");
+      }
+    } catch {
+      setError("Erreur de connexion au serveur");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!window.confirm("Supprimer cet avis ?")) return;
+    setDeleting((d) => ({ ...d, [id]: true }));
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/reviews/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setReviews(data);
+    } finally {
+      setDeleting((d) => ({ ...d, [id]: false }));
+    }
+  }
+
+  return (
+    <div className="mt-14">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <h2 style={{ ...display, color: colors.ink, fontSize: "22px" }}>Avis clients</h2>
+        <button
+          onClick={() => {
+            if (showForm) {
+              setShowForm(false);
+              resetForm();
+            } else {
+              resetForm();
+              setShowForm(true);
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold"
+          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+        >
+          <Plus size={14} /> {showForm ? "Annuler" : "Ajouter un avis"}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="mb-6 p-6 rounded-xl border space-y-3" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.15)" }}>
+          <p className="text-sm font-semibold" style={{ color: colors.ink }}>{editingId ? "Modifier l'avis" : "Nouvel avis"}</p>
+          <div className="flex gap-3 flex-wrap">
+            <input placeholder="Nom du client *" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} className="flex-1 min-w-[160px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+            <select value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} className="px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}>
+              {[5, 4, 3, 2, 1].map((n) => (
+                <option key={n} value={n}>{n} étoile{n > 1 ? "s" : ""}</option>
+              ))}
+            </select>
+            <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+          </div>
+          <input placeholder="Source (ex: Vinted, Whatnot, Discord) — facultatif" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+          <textarea placeholder="Colle ici le texte de l'avis *" value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={4} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+          {error && <p className="text-sm" style={{ color: "#e08a7d" }}>{error}</p>}
+          <button type="submit" disabled={saving} className="rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
+            {saving ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Ajouter l'avis"}
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-3">
+        {reviews.map((r) => (
+          <div key={r.id} className="flex items-start justify-between flex-wrap gap-3 p-4 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-sm" style={{ color: colors.ink }}>{r.author}</span>
+                <StarRating rating={r.rating} size={13} />
+                {r.source && <span className="text-[10px]" style={{ ...mono, color: colors.gold }}>{r.source}</span>}
+              </div>
+              <p className="text-xs mt-1.5 line-clamp-2" style={{ color: colors.ink, opacity: 0.75 }}>{r.text}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={() => startEdit(r)} className="rounded-full px-3 py-1.5 text-xs font-semibold border" style={{ borderColor: colors.ink, color: colors.ink }}>Modifier</button>
+              <button onClick={() => handleDelete(r.id)} disabled={deleting[r.id]} className="rounded-full px-3 py-1.5 text-xs font-semibold border disabled:opacity-60" style={{ borderColor: "#e08a7d", color: "#e08a7d" }}>
+                {deleting[r.id] ? "..." : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        ))}
+        {reviews.length === 0 && (
+          <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Aucun avis pour l'instant.</p>
+        )}
       </div>
     </div>
   );
@@ -1529,6 +1692,81 @@ function PhoneReveal({ number }) {
     >
       Afficher le numéro
     </button>
+  );
+}
+
+function StarRating({ rating, size = 15 }) {
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${rating} sur 5 étoiles`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <svg key={n} width={size} height={size} viewBox="0 0 24 24" fill={n <= rating ? colors.goldBright : "none"} stroke={colors.goldBright} strokeWidth="1.5">
+          <path d="M12 3.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6Z" strokeLinejoin="round" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+function ReviewsPage() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${CHECKOUT_API_URL}/api/reviews`)
+      .then((r) => r.json())
+      .then((data) => {
+        setReviews(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const average = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : null;
+
+  return (
+    <div style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
+      <div className="max-w-2xl mx-auto px-5 sm:px-6 py-12">
+        <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-8" style={{ color: colors.ink, opacity: 0.65 }}>
+          <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
+        </a>
+
+        <Eyebrow>Ce que dit la communauté</Eyebrow>
+        <h1 style={{ ...display, color: colors.ink, fontSize: "clamp(28px,4vw,36px)" }} className="mt-2 mb-2">Avis clients</h1>
+
+        {average && (
+          <div className="flex items-center gap-2 mb-10">
+            <StarRating rating={Math.round(average)} size={18} />
+            <span className="text-sm" style={{ color: colors.ink, opacity: 0.75 }}>{average} / 5 · {reviews.length} avis</span>
+          </div>
+        )}
+
+        {loading && <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Chargement des avis...</p>}
+
+        {!loading && reviews.length === 0 && (
+          <div className="rounded-2xl border border-dashed p-10 text-center" style={{ borderColor: colors.moss, backgroundColor: colors.parchmentSoft }}>
+            <p style={{ color: colors.ink, opacity: 0.7 }}>Aucun avis pour l'instant — les premiers arrivent bientôt !</p>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {reviews.map((r) => (
+            <div key={r.id} className="rounded-2xl border p-5" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                <span className="font-semibold text-sm" style={{ color: colors.ink }}>{r.author}</span>
+                <StarRating rating={r.rating} />
+              </div>
+              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: colors.ink, opacity: 0.82 }}>{r.text}</p>
+              <div className="flex items-center gap-2 mt-3">
+                {r.date && <span className="text-[11px]" style={{ ...mono, color: colors.moss }}>{r.date}</span>}
+                {r.source && (
+                  <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ ...mono, color: colors.gold, border: `1px solid ${colors.gold}` }}>{r.source}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1657,6 +1895,7 @@ export default function DreamValleySite() {
   if (path.startsWith("/merci")) return <SuccessPage />;
   if (path.startsWith("/achat-annule")) return <CancelPage />;
   if (path.startsWith("/mentions-legales")) return <LegalPage />;
+  if (path.startsWith("/avis")) return <ReviewsPage />;
 
   return (
     <CartProvider>
