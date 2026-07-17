@@ -1729,8 +1729,6 @@ function ReviewsPage() {
         <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-8" style={{ color: colors.ink, opacity: 0.65 }}>
           <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
         </a>
-
-        <Eyebrow>Ce que dit la communauté</Eyebrow>
         <h1 style={{ ...display, color: colors.ink, fontSize: "clamp(28px,4vw,36px)" }} className="mt-2 mb-2">Avis clients</h1>
 
         {average && (
