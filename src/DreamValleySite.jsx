@@ -140,8 +140,8 @@ function HeroBanner() {
         alt="DreamValleyTCG"
         className="absolute inset-0 w-full h-full object-cover"
         style={{
-          maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+          maskImage: "radial-gradient(ellipse at center, black 45%, transparent 92%)",
+          WebkitMaskImage: "radial-gradient(ellipse at center, black 45%, transparent 92%)",
         }}
       />
 
@@ -582,6 +582,21 @@ const SOCIAL_LINKS = [
 function NavBar() {
   const { totalCount, setDrawerOpen } = useCart();
 
+  const CartButton = ({ withLabel = true }) => (
+    <button onClick={() => setDrawerOpen(true)} className="relative flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg shrink-0" style={{ color: colors.ink }} aria-label="Ouvrir le panier">
+      <ShoppingBag size={20} />
+      {withLabel && <span className="text-[9px] sm:text-[10px] font-semibold leading-none" style={mono}>Panier</span>}
+      {totalCount > 0 && (
+        <span
+          className="absolute -top-1 -right-1 text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold"
+          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+        >
+          {totalCount}
+        </span>
+      )}
+    </button>
+  );
+
   return (
     <header className="sticky top-0 z-20 backdrop-blur border-b" style={{ backgroundColor: "rgba(13,27,42,0.92)", borderColor: "rgba(240,236,224,0.12)" }}>
       <div className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-6 py-3">
@@ -589,7 +604,8 @@ function NavBar() {
           <img src="/favicon-logo.png" alt="DreamValleyTCG" className="h-14 sm:h-16 w-auto" />
         </a>
 
-        <div className="flex items-end gap-2 sm:gap-3 flex-wrap justify-end">
+        {/* Desktop : icônes + libellés inline, inchangé */}
+        <div className="hidden sm:flex items-end gap-3 flex-wrap justify-end">
           {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
             <a
               key={name}
@@ -600,22 +616,34 @@ function NavBar() {
               style={{ color: colors.ink }}
             >
               <Icon width={20} height={20} />
-              <span className="text-[9px] sm:text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>{name}</span>
+              <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>{name}</span>
             </a>
           ))}
+          <CartButton />
+        </div>
 
-          <button onClick={() => setDrawerOpen(true)} className="relative flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg ml-1" style={{ color: colors.ink }} aria-label="Ouvrir le panier">
-            <ShoppingBag size={20} />
-            <span className="text-[9px] sm:text-[10px] font-semibold leading-none" style={mono}>Panier</span>
-            {totalCount > 0 && (
-              <span
-                className="absolute -top-1 -right-1 text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold"
-                style={{ backgroundColor: colors.goldBright, color: colors.bark }}
-              >
-                {totalCount}
-              </span>
-            )}
-          </button>
+        {/* Mobile : seul le panier reste sur la rangée principale */}
+        <div className="flex sm:hidden">
+          <CartButton withLabel={false} />
+        </div>
+      </div>
+
+      {/* Mobile : bande d'icônes dédiée, défilement horizontal */}
+      <div className="sm:hidden border-t overflow-x-auto" style={{ borderColor: "rgba(240,236,224,0.1)" }}>
+        <div className="flex items-center gap-4 px-5 py-2 whitespace-nowrap">
+          {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
+            <a
+              key={name}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-1 shrink-0 no-underline"
+              style={{ color: colors.ink }}
+            >
+              <Icon width={19} height={19} />
+              <span className="text-[9px] font-semibold leading-none" style={mono}>{name}</span>
+            </a>
+          ))}
         </div>
       </div>
 
