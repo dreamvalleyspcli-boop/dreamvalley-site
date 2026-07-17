@@ -1046,9 +1046,6 @@ function Footer() {
           <a href="/mentions-legales" className="text-xs no-underline" style={{ color: "rgba(240,236,224,0.7)" }}>
             Mentions légales · CGV · Confidentialité
           </a>
-          <p className="max-w-md text-xs leading-relaxed" style={{ color: "rgba(240,236,224,0.5)" }}>
-            Revendeur indépendant de produits Pokémon TCG scellés. Aucune affiliation avec The Pokémon Company, Nintendo, Game Freak ou Asmodée. © 2026 DreamValleyTCG.
-          </p>
         </div>
       </div>
     </footer>
