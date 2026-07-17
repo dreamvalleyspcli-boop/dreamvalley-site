@@ -1014,6 +1014,45 @@ function Catalogue() {
   );
 }
 
+function Testimonials() {
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    fetch(`${CHECKOUT_API_URL}/api/reviews`)
+      .then((r) => r.json())
+      .then(setReviews)
+      .catch(() => {});
+  }, []);
+
+  if (reviews.length === 0) return null;
+  const featured = reviews.slice(0, 3);
+
+  return (
+    <section className="max-w-6xl mx-auto px-5 sm:px-6 py-16 sm:py-20">
+      <Reveal>
+        <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
+          <div>
+            <Eyebrow>Ce que dit la communauté</Eyebrow>
+            <h2 className="mt-3" style={{ ...display, fontSize: "clamp(28px,4vw,38px)", color: colors.ink }}>Ils nous font confiance.</h2>
+          </div>
+          <a href="/avis" className="text-sm font-semibold underline no-underline" style={{ color: colors.moss }}>Voir tous les avis →</a>
+        </div>
+      </Reveal>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
+        {featured.map((r, i) => (
+          <Reveal key={r.id} delay={i * 100}>
+            <div className="rounded-2xl p-6 border h-full flex flex-col" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
+              <StarRating rating={r.rating} size={14} />
+              <p className="mt-3 text-sm line-clamp-4 flex-1" style={{ color: colors.ink, opacity: 0.8 }}>{r.text}</p>
+              <p className="mt-4 text-xs font-semibold" style={{ ...mono, color: colors.gold }}>{r.author}</p>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Community() {
   const links = [
     { name: "Discord", role: "Communauté & annonces", href: "https://discord.gg/pNv9xPKGwV" },
@@ -1729,6 +1768,8 @@ function ReviewsPage() {
         <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-8" style={{ color: colors.ink, opacity: 0.65 }}>
           <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
         </a>
+
+        <Eyebrow>Ce que dit la communauté</Eyebrow>
         <h1 style={{ ...display, color: colors.ink, fontSize: "clamp(28px,4vw,36px)" }} className="mt-2 mb-2">Avis clients</h1>
 
         {average && (
@@ -1886,6 +1927,31 @@ function CancelPage() {
   );
 }
 
+function NotFoundPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: colors.parchment }}>
+      <div className="max-w-md text-center">
+        <p style={{ ...display, fontStyle: "italic", color: colors.goldBright, fontSize: "72px", lineHeight: 1 }}>404</p>
+        <h1 className="mt-4" style={{ ...display, fontSize: "clamp(26px,4vw,32px)", color: colors.ink }}>
+          Cette page s'est égarée dans la vallée.
+        </h1>
+        <p className="mt-4 text-base" style={{ color: colors.ink, opacity: 0.8 }}>
+          Le lien est peut-être incorrect, ou la page n'existe plus. Retourne à l'accueil pour continuer ton exploration.
+        </p>
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8"
+          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+        >
+          Retour à l'accueil
+        </a>
+      </div>
+    </div>
+  );
+}
+
+const KNOWN_PATH_PREFIXES = ["/admin", "/merci", "/achat-annule", "/mentions-legales", "/avis", "/produit"];
+
 export default function DreamValleySite() {
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
 
@@ -1894,6 +1960,9 @@ export default function DreamValleySite() {
   if (path.startsWith("/achat-annule")) return <CancelPage />;
   if (path.startsWith("/mentions-legales")) return <LegalPage />;
   if (path.startsWith("/avis")) return <ReviewsPage />;
+
+  const isKnownPath = path === "/" || KNOWN_PATH_PREFIXES.some((p) => path.startsWith(p));
+  if (!isKnownPath) return <NotFoundPage />;
 
   return (
     <CartProvider>
@@ -1904,9 +1973,11 @@ export default function DreamValleySite() {
         <Hero />
         <Principles />
         <Catalogue />
+        <Testimonials />
         <Community />
         <Footer />
       </div>
     </CartProvider>
+
   );
 }
