@@ -1563,6 +1563,7 @@ function AdminPage() {
         </p>
 
         <ReviewsAdmin token={token} />
+        <CalendarAdmin token={token} />
       </div>
     </div>
   );
@@ -1709,6 +1710,171 @@ function ReviewsAdmin({ token }) {
         {reviews.length === 0 && (
           <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Aucun avis pour l'instant.</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function CalendarAdmin({ token }) {
+  const [weeks, setWeeks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${CHECKOUT_API_URL}/api/admin/calendar`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setWeeks(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [token]);
+
+  function updateCell(weekIndex, dayIndex, field, value) {
+    setWeeks((w) => {
+      const next = [...w];
+      const week = { ...next[weekIndex] };
+      const days = [...week.days];
+      days[dayIndex] = { ...days[dayIndex], [field]: value };
+      week.days = days;
+      next[weekIndex] = week;
+      return next;
+    });
+  }
+
+  function updateWeekTitle(weekIndex, value) {
+    setWeeks((w) => {
+      const next = [...w];
+      next[weekIndex] = { ...next[weekIndex], title: value };
+      return next;
+    });
+  }
+
+  async function save() {
+    setSaving(true);
+    setMessage("");
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/calendar/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ weeks }),
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setWeeks(data);
+        setMessage("Enregistré ✓");
+      } else {
+        setMessage(data.error || "Erreur");
+      }
+    } catch {
+      setMessage("Erreur de connexion");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function resetFromTemplate() {
+    if (!window.confirm("Recharger le modèle du mois ? Les modifications non enregistrées seront perdues.")) return;
+    setSaving(true);
+    setMessage("");
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/calendar/reset`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setWeeks(data);
+        setMessage("Modèle rechargé ✓");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveAsTemplate() {
+    if (!window.confirm("Enregistrer la version actuelle comme modèle réutilisable chaque mois ?")) return;
+    setSaving(true);
+    setMessage("");
+    try {
+      await fetch(`${CHECKOUT_API_URL}/api/admin/calendar/save-template`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMessage("Modèle sauvegardé ✓");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return <p className="text-sm mt-14" style={{ color: colors.ink, opacity: 0.6 }}>Chargement du calendrier...</p>;
+  }
+
+  return (
+    <div className="mt-14">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+        <h2 style={{ ...display, color: colors.ink, fontSize: "22px" }}>Calendrier de contenu</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          {message && <span className="text-xs" style={{ color: colors.moss }}>{message}</span>}
+          <button onClick={resetFromTemplate} disabled={saving} className="rounded-full px-4 py-2 text-xs font-semibold border disabled:opacity-60" style={{ borderColor: colors.ink, color: colors.ink }}>
+            Réinitialiser depuis le modèle
+          </button>
+          <button onClick={saveAsTemplate} disabled={saving} className="rounded-full px-4 py-2 text-xs font-semibold border disabled:opacity-60" style={{ borderColor: colors.gold, color: colors.gold }}>
+            Enregistrer comme modèle du mois
+          </button>
+          <button onClick={save} disabled={saving} className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
+            {saving ? "..." : "Enregistrer"}
+          </button>
+        </div>
+      </div>
+      <p className="text-xs mb-6" style={{ color: colors.ink, opacity: 0.55 }}>
+        Modifie librement chaque case. "Réinitialiser" recharge le modèle réutilisable ; "Enregistrer comme modèle" fige la version actuelle pour les mois suivants.
+      </p>
+
+      <div className="space-y-8">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="rounded-xl border p-4" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
+            <input
+              value={week.title}
+              onChange={(e) => updateWeekTitle(wi, e.target.value)}
+              className="w-full mb-3 px-2.5 py-1.5 rounded-lg border text-sm font-semibold"
+              style={{ borderColor: "rgba(240,236,224,0.2)", backgroundColor: colors.parchment, color: colors.ink }}
+            />
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs" style={{ borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th className="text-left p-1.5" style={{ color: colors.moss }}>Jour</th>
+                    <th className="text-left p-1.5" style={{ color: colors.moss }}>🌅 Matin</th>
+                    <th className="text-left p-1.5" style={{ color: colors.moss }}>☀️ Midi</th>
+                    <th className="text-left p-1.5" style={{ color: colors.moss }}>🌙 Soir</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {week.days.map((d, di) => (
+                    <tr key={di}>
+                      <td className="p-1.5 align-top font-semibold whitespace-nowrap" style={{ color: colors.ink }}>{d.day}</td>
+                      {["morning", "midday", "evening"].map((field) => (
+                        <td key={field} className="p-1.5 align-top">
+                          <textarea
+                            value={d[field]}
+                            onChange={(e) => updateCell(wi, di, field, e.target.value)}
+                            rows={2}
+                            className="w-full min-w-[160px] px-2 py-1 rounded-md border text-xs resize-y"
+                            style={{ borderColor: "rgba(240,236,224,0.15)", backgroundColor: colors.parchment, color: colors.ink }}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
