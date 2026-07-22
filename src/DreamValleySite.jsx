@@ -1,11 +1,12 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Code2, Mail, Search, Truck, Star } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Code2, Mail, Search, Truck, Star, TrendingUp } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
 import "@fontsource/fraunces/500-italic.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
+import CoursDesCartesPage from "./CoursDesCartesPage";
 
 const CHECKOUT_API_URL = "https://dreamvalley-api.dreamvalleyspcli.workers.dev";
 
@@ -606,23 +607,16 @@ function NavBar() {
 
         {/* Desktop : icônes + libellés inline, inchangé */}
         <div className="hidden sm:flex items-end gap-3 flex-wrap justify-end">
-          <a
-            href="/avis"
-            className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline"
-            style={{ color: colors.ink }}
-          >
+          <a href="/avis" className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline" style={{ color: colors.ink }}>
             <Star width={20} height={20} />
             <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>Avis</span>
           </a>
+          <a href="/cours-des-cartes" className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline" style={{ color: colors.ink }}>
+            <TrendingUp width={20} height={20} />
+            <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>Cours</span>
+          </a>
           {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
-            <a
-              key={name}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline"
-              style={{ color: colors.ink }}
-            >
+            <a key={name} href={href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline" style={{ color: colors.ink }}>
               <Icon width={20} height={20} />
               <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>{name}</span>
             </a>
@@ -643,15 +637,12 @@ function NavBar() {
             <Star width={19} height={19} />
             <span className="text-[9px] font-semibold leading-none" style={mono}>Avis</span>
           </a>
+          <a href="/cours-des-cartes" className="flex flex-col items-center gap-1 shrink-0 no-underline" style={{ color: colors.ink }}>
+            <TrendingUp width={19} height={19} />
+            <span className="text-[9px] font-semibold leading-none" style={mono}>Cours</span>
+          </a>
           {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
-            <a
-              key={name}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-1 shrink-0 no-underline"
-              style={{ color: colors.ink }}
-            >
+            <a key={name} href={href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 shrink-0 no-underline" style={{ color: colors.ink }}>
               <Icon width={19} height={19} />
               <span className="text-[9px] font-semibold leading-none" style={mono}>{name}</span>
             </a>
@@ -1127,14 +1118,7 @@ function QuickLinks() {
       <p className="text-sm font-semibold mb-3" style={{ color: colors.ink }}>Liens rapides</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         {QUICK_LINKS.map(({ name, role, Icon, href }) => (
-          <a
-            key={name}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 no-underline border transition-colors hover:border-opacity-60"
-            style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.12)" }}
-          >
+          <a key={name} href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 no-underline border transition-colors hover:border-opacity-60" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.12)" }}>
             <span className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.bark }}>
               <Icon size={16} color={colors.goldBright} />
             </span>
@@ -2055,11 +2039,7 @@ function SuccessPage() {
         <p className="mt-4 text-base" style={{ color: colors.ink, opacity: 0.8 }}>
           Ton paiement a bien été reçu. Un email de confirmation Stripe vient d'arriver dans ta boîte mail, et l'expédition suit sous peu.
         </p>
-        <a
-          href="/"
-          className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8"
-          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
-        >
+        <a href="/" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
           Retour à l'accueil
         </a>
       </div>
@@ -2081,11 +2061,7 @@ function CancelPage() {
         <p className="mt-4 text-base" style={{ color: colors.ink, opacity: 0.8 }}>
           Ta commande a été annulée avant paiement. Ton panier est toujours disponible si tu veux réessayer.
         </p>
-        <a
-          href="/#catalogue"
-          className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8"
-          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
-        >
+        <a href="/#catalogue" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
           Retour au catalogue
         </a>
       </div>
@@ -2104,11 +2080,7 @@ function NotFoundPage() {
         <p className="mt-4 text-base" style={{ color: colors.ink, opacity: 0.8 }}>
           Le lien est peut-être incorrect, ou la page n'existe plus. Retourne à l'accueil pour continuer ton exploration.
         </p>
-        <a
-          href="/"
-          className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8"
-          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
-        >
+        <a href="/" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline mt-8" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
           Retour à l'accueil
         </a>
       </div>
@@ -2116,7 +2088,7 @@ function NotFoundPage() {
   );
 }
 
-const KNOWN_PATH_PREFIXES = ["/admin", "/merci", "/achat-annule", "/mentions-legales", "/avis", "/produit"];
+const KNOWN_PATH_PREFIXES = ["/admin", "/merci", "/achat-annule", "/mentions-legales", "/avis", "/produit", "/cours-des-cartes"];
 
 export default function DreamValleySite() {
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -2126,6 +2098,7 @@ export default function DreamValleySite() {
   if (path.startsWith("/achat-annule")) return <CancelPage />;
   if (path.startsWith("/mentions-legales")) return <LegalPage />;
   if (path.startsWith("/avis")) return <ReviewsPage />;
+  if (path.startsWith("/cours-des-cartes")) return <CoursDesCartesPage />;
 
   const isKnownPath = path === "/" || KNOWN_PATH_PREFIXES.some((p) => path.startsWith(p));
   if (!isKnownPath) return <NotFoundPage />;
@@ -2144,6 +2117,5 @@ export default function DreamValleySite() {
         <Footer />
       </div>
     </CartProvider>
-
   );
 }
