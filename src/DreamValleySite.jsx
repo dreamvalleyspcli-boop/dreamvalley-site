@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from "react";
-import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Code2, Mail, Search, Truck, Star, TrendingUp } from "lucide-react";
+import { Check, ShieldCheck, Users, ArrowRight, Menu, X, ShoppingBag, Plus, Minus, Leaf, Lock, CheckCircle2, XCircle, Trash2, ChevronUp, ChevronDown, Info, Bell, CreditCard, Cloud, Code2, Mail, Search, Truck, Star, TrendingUp, Gift, Sparkles, Copy } from "lucide-react";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
@@ -615,6 +615,10 @@ function NavBar() {
             <TrendingUp width={20} height={20} />
             <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>Cours</span>
           </a>
+          <a href="/tirage-du-jour" className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline" style={{ color: colors.ink }}>
+            <Gift width={20} height={20} />
+            <span className="text-[10px] font-semibold leading-none whitespace-nowrap" style={mono}>Jeu</span>
+          </a>
           {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
             <a key={name} href={href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 px-1.5 py-1 rounded-lg transition-colors no-underline" style={{ color: colors.ink }}>
               <Icon width={20} height={20} />
@@ -640,6 +644,10 @@ function NavBar() {
           <a href="/cours-des-cartes" className="flex flex-col items-center gap-1 shrink-0 no-underline" style={{ color: colors.ink }}>
             <TrendingUp width={19} height={19} />
             <span className="text-[9px] font-semibold leading-none" style={mono}>Cours</span>
+          </a>
+          <a href="/tirage-du-jour" className="flex flex-col items-center gap-1 shrink-0 no-underline" style={{ color: colors.ink }}>
+            <Gift width={19} height={19} />
+            <span className="text-[9px] font-semibold leading-none" style={mono}>Jeu</span>
           </a>
           {SOCIAL_LINKS.filter((s) => s.href).map(({ name, Icon, href }) => (
             <a key={name} href={href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 shrink-0 no-underline" style={{ color: colors.ink }}>
@@ -1580,6 +1588,7 @@ function AdminPage() {
         </p>
 
         <ReviewsAdmin token={token} />
+        <GameCodesAdmin token={token} />
         <CalendarAdmin token={token} />
       </div>
     </div>
@@ -1727,6 +1736,100 @@ function ReviewsAdmin({ token }) {
         {reviews.length === 0 && (
           <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Aucun avis pour l'instant.</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function GameCodesAdmin({ token }) {
+  const [codes, setCodes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [marking, setMarking] = useState({});
+  const [search, setSearch] = useState("");
+
+  function loadCodes() {
+    setLoading(true);
+    fetch(`${CHECKOUT_API_URL}/api/admin/game/codes`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setCodes(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    if (token) loadCodes();
+  }, [token]);
+
+  async function markUsed(code) {
+    setMarking((m) => ({ ...m, [code]: true }));
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/game/codes/use`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setCodes(data);
+    } finally {
+      setMarking((m) => ({ ...m, [code]: false }));
+    }
+  }
+
+  const filtered = codes.filter((c) => c.code.toLowerCase().includes(search.trim().toLowerCase()));
+  const unusedCount = codes.filter((c) => !c.used).length;
+
+  return (
+    <div className="mt-14">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+        <h2 style={{ ...display, color: colors.ink, fontSize: "22px" }}>Codes du tirage du jour</h2>
+        <button onClick={loadCodes} className="rounded-full px-4 py-2 text-xs font-semibold border" style={{ borderColor: colors.ink, color: colors.ink }}>
+          Rafraîchir
+        </button>
+      </div>
+      <p className="text-xs mb-6" style={{ color: colors.ink, opacity: 0.55 }}>
+        Un client te montre son code sur Discord → cherche-le ici, vérifie qu'il n'est pas déjà marqué "utilisé", applique la réduction de -10 %, puis marque-le comme utilisé. {unusedCount} code{unusedCount > 1 ? "s" : ""} en attente de vérification.
+      </p>
+
+      <input
+        placeholder="Rechercher un code (ex: DV-A3F9K2)"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg border mb-4 text-sm"
+        style={{ ...mono, borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
+      />
+
+      {loading && <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Chargement des codes...</p>}
+
+      {!loading && filtered.length === 0 && (
+        <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Aucun code pour l'instant.</p>
+      )}
+
+      <div className="space-y-2">
+        {filtered.map((c) => (
+          <div key={c.code} className="flex items-center justify-between flex-wrap gap-3 p-4 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: c.used ? "rgba(240,236,224,0.1)" : colors.goldBright }}>
+            <div className="min-w-0">
+              <p style={{ ...mono, color: colors.ink, fontSize: "15px", letterSpacing: "0.04em" }}>{c.code}</p>
+              <p className="text-[11px] mt-1" style={{ color: colors.moss }}>
+                Gagné le {c.createdAt ? new Date(c.createdAt).toLocaleString("fr-FR") : "date inconnue"}
+                {c.used && c.usedAt ? ` · utilisé le ${new Date(c.usedAt).toLocaleString("fr-FR")}` : ""}
+              </p>
+            </div>
+            {c.used ? (
+              <span className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ color: colors.moss, border: `1px solid ${colors.moss}` }}>Déjà utilisé</span>
+            ) : (
+              <button
+                onClick={() => markUsed(c.code)}
+                disabled={marking[c.code]}
+                className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60"
+                style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+              >
+                {marking[c.code] ? "..." : "Marquer utilisé"}
+              </button>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -1929,6 +2032,185 @@ function StarRating({ rating, size = 15 }) {
   );
 }
 
+function TirageDuJourPage() {
+  const [status, setStatus] = useState("idle"); // idle | pulling | result | already | error
+  const [result, setResult] = useState(null); // { win, code }
+  const [flipped, setFlipped] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    try {
+      const last = localStorage.getItem("dv_game_last_pull");
+      const today = new Date().toISOString().slice(0, 10);
+      if (last === today) setStatus("already");
+    } catch {}
+  }, []);
+
+  async function handlePull() {
+    if (status === "pulling") return;
+    setStatus("pulling");
+    setFlipped(false);
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/game/pull`, { method: "POST" });
+      const data = await res.json();
+
+      if (res.status === 429 || data.error === "already_played") {
+        setStatus("already");
+        try {
+          localStorage.setItem("dv_game_last_pull", new Date().toISOString().slice(0, 10));
+        } catch {}
+        return;
+      }
+      if (data.error) {
+        setStatus("error");
+        return;
+      }
+
+      setResult(data);
+      try {
+        localStorage.setItem("dv_game_last_pull", new Date().toISOString().slice(0, 10));
+      } catch {}
+      // petit délai pour laisser l'animation de tirage se jouer avant de révéler
+      setTimeout(() => {
+        setFlipped(true);
+        setStatus("result");
+      }, 900);
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  function copyCode() {
+    if (!result?.code) return;
+    navigator.clipboard?.writeText(result.code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
+      <div className="max-w-xl mx-auto px-5 sm:px-6 py-12 text-center">
+        <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-8" style={{ color: colors.ink, opacity: 0.65 }}>
+          <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
+        </a>
+
+        <Eyebrow>Une tentative par jour</Eyebrow>
+        <h1 className="mt-3 mb-3" style={{ ...display, fontSize: "clamp(28px,4vw,36px)", color: colors.ink }}>Le tirage du jour</h1>
+        <p className="text-sm max-w-sm mx-auto mb-10" style={{ color: colors.ink, opacity: 0.72 }}>
+          Tire une carte, une fois par jour. 1 % de chance de tomber sur la carte dorée et de gagner <strong>-10 %</strong> sur ta prochaine commande.
+        </p>
+
+        <div className="mx-auto mb-10" style={{ width: "min(260px, 70vw)", height: "min(360px, 50vh)", perspective: "1400px" }}>
+          <div
+            className="relative w-full h-full transition-transform duration-700"
+            style={{ transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+          >
+            {/* Dos de la carte */}
+            <div
+              className="absolute inset-0 rounded-2xl border-2 flex items-center justify-center overflow-hidden"
+              style={{ backfaceVisibility: "hidden", borderColor: colors.goldBright, backgroundColor: colors.parchmentSoft }}
+            >
+              <div
+                className="absolute inset-3 rounded-xl"
+                style={{
+                  background: `repeating-linear-gradient(135deg, ${colors.bark} 0px, ${colors.bark} 10px, ${colors.parchmentSoft} 10px, ${colors.parchmentSoft} 20px)`,
+                  opacity: 0.5,
+                }}
+              />
+              <Sparkles size={48} color={colors.goldBright} strokeWidth={1.4} className={status === "pulling" ? "dv-shine" : ""} style={{ position: "relative" }} />
+            </div>
+
+            {/* Face de la carte (résultat) */}
+            <div
+              className="absolute inset-0 rounded-2xl border-2 flex flex-col items-center justify-center p-6 text-center"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+                borderColor: result?.win ? colors.goldBright : "rgba(240,236,224,0.2)",
+                backgroundColor: colors.parchmentSoft,
+              }}
+            >
+              {result?.win ? (
+                <>
+                  <Gift size={40} color={colors.goldBright} />
+                  <p className="mt-3" style={{ ...display, color: colors.goldBright, fontSize: "20px" }}>Carte dorée !</p>
+                  <p className="mt-1 text-xs" style={{ color: colors.ink, opacity: 0.75 }}>-10 % sur ta prochaine commande</p>
+                </>
+              ) : (
+                <>
+                  <Leaf size={40} color={colors.moss} />
+                  <p className="mt-3" style={{ ...display, color: colors.ink, fontSize: "18px" }}>Pas cette fois</p>
+                  <p className="mt-1 text-xs" style={{ color: colors.ink, opacity: 0.6 }}>Retente ta chance demain</p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {status === "idle" && (
+          <button
+            onClick={handlePull}
+            className="inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold transition-transform hover:-translate-y-0.5"
+            style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+          >
+            Tirer une carte
+          </button>
+        )}
+
+        {status === "pulling" && (
+          <p className="text-sm" style={{ ...mono, color: colors.moss }}>Tirage en cours...</p>
+        )}
+
+        {status === "already" && (
+          <div className="rounded-2xl border border-dashed p-6" style={{ borderColor: colors.moss, backgroundColor: colors.parchmentSoft }}>
+            <p style={{ color: colors.ink, opacity: 0.8 }}>Tu as déjà tenté ta chance aujourd'hui — reviens demain !</p>
+          </div>
+        )}
+
+        {status === "error" && (
+          <p className="text-sm" style={{ color: "#e08a7d" }}>Une erreur est survenue, réessaie dans un instant.</p>
+        )}
+
+        {status === "result" && result?.win && (
+          <div className="rounded-2xl border p-6" style={{ borderColor: colors.goldBright, backgroundColor: colors.parchmentSoft }}>
+            <p className="text-sm mb-3" style={{ color: colors.ink, opacity: 0.85 }}>
+              Bravo ! Voici ton code — <strong>rejoins notre Discord</strong> avec ce code pour récupérer ta réduction :
+            </p>
+            <button
+              onClick={copyCode}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 mb-4 mx-auto"
+              style={{ ...mono, backgroundColor: colors.bark, color: colors.goldBright, fontSize: "16px", letterSpacing: "0.05em" }}
+            >
+              {result.code}
+              <Copy size={14} />
+            </button>
+            {copied && <p className="text-xs mb-3" style={{ color: colors.moss }}>Copié !</p>}
+            <a
+              href="https://discord.gg/pNv9xPKGwV"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold no-underline"
+              style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+            >
+              <IconDiscord width={16} height={16} /> Rejoindre le Discord
+            </a>
+            <p className="mt-4 text-xs" style={{ color: colors.ink, opacity: 0.5 }}>
+              Garde une capture de ce code, il sera vérifié manuellement sur le Discord.
+            </p>
+          </div>
+        )}
+
+        {status === "result" && result && !result.win && (
+          <div className="rounded-2xl border border-dashed p-6" style={{ borderColor: colors.moss, backgroundColor: colors.parchmentSoft }}>
+            <p style={{ color: colors.ink, opacity: 0.8 }}>Pas de chance cette fois — retente ta chance demain !</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ReviewsPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2121,7 +2403,7 @@ function NotFoundPage() {
   );
 }
 
-const KNOWN_PATH_PREFIXES = ["/admin", "/merci", "/achat-annule", "/mentions-legales", "/avis", "/produit", "/cours-des-cartes"];
+const KNOWN_PATH_PREFIXES = ["/admin", "/merci", "/achat-annule", "/mentions-legales", "/avis", "/produit", "/cours-des-cartes", "/tirage-du-jour"];
 
 export default function DreamValleySite() {
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -2132,6 +2414,7 @@ export default function DreamValleySite() {
   if (path.startsWith("/mentions-legales")) return <LegalPage />;
   if (path.startsWith("/avis")) return <ReviewsPage />;
   if (path.startsWith("/cours-des-cartes")) return <CoursDesCartesPage />;
+  if (path.startsWith("/tirage-du-jour")) return <TirageDuJourPage />;
 
   const isKnownPath = path === "/" || KNOWN_PATH_PREFIXES.some((p) => path.startsWith(p));
   if (!isKnownPath) return <NotFoundPage />;
