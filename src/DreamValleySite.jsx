@@ -420,6 +420,10 @@ function CartProvider({ children }) {
   const [activeCategory, setActiveCategory] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [status, setStatus] = useState("idle");
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountState, setDiscountState] = useState("idle"); // idle | checking | valid | invalid
+  const [discountMessage, setDiscountMessage] = useState("");
+  const [checkoutError, setCheckoutError] = useState("");
 
   useEffect(() => {
     try {
@@ -472,12 +476,45 @@ function CartProvider({ children }) {
   }));
   const totalCount = cartItems.reduce((n, i) => n + i.quantity, 0);
   const total = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const discountedTotal = discountState === "valid" ? total * 0.9 : total;
 
   const isOutOfStock = (id) => stock[id] === 0;
+
+  async function validateDiscountCode() {
+    const code = discountCode.trim();
+    if (!code) return;
+    setDiscountState("checking");
+    setDiscountMessage("");
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/game/validate-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setDiscountState("valid");
+        setDiscountMessage("Code appliqué : -10 % sur ta commande");
+      } else {
+        setDiscountState("invalid");
+        setDiscountMessage(data.error || "Code invalide");
+      }
+    } catch {
+      setDiscountState("invalid");
+      setDiscountMessage("Erreur de connexion, réessaie");
+    }
+  }
+
+  function clearDiscountCode() {
+    setDiscountCode("");
+    setDiscountState("idle");
+    setDiscountMessage("");
+  }
 
   async function checkout() {
     if (cartItems.length === 0) return;
     setStatus("loading");
+    setCheckoutError("");
     try {
       const res = await fetch(CHECKOUT_API_URL, {
         method: "POST",
@@ -486,11 +523,16 @@ function CartProvider({ children }) {
           items: cartItems,
           successUrl: window.location.origin + "/merci?session_id={CHECKOUT_SESSION_ID}",
           cancelUrl: window.location.origin + "/achat-annule",
+          discountCode: discountState === "valid" ? discountCode.trim().toUpperCase() : undefined,
         }),
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else throw new Error(data.error || "Erreur inconnue");
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setCheckoutError(data.error || "Erreur inconnue");
+        throw new Error(data.error || "Erreur inconnue");
+      }
     } catch (err) {
       console.error(err);
       setStatus("error");
@@ -499,7 +541,33 @@ function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, cartItems, totalCount, total, addToCart, removeFromCart, removeItemCompletely, drawerOpen, setDrawerOpen, checkout, status, isOutOfStock, remainingStock, products, categories, activeCategory, setActiveCategory }}
+      value={{
+        cart,
+        cartItems,
+        totalCount,
+        total,
+        discountedTotal,
+        discountCode,
+        setDiscountCode,
+        discountState,
+        discountMessage,
+        validateDiscountCode,
+        clearDiscountCode,
+        addToCart,
+        removeFromCart,
+        removeItemCompletely,
+        drawerOpen,
+        setDrawerOpen,
+        checkout,
+        status,
+        checkoutError,
+        isOutOfStock,
+        remainingStock,
+        products,
+        categories,
+        activeCategory,
+        setActiveCategory,
+      }}
     >
       {children}
     </CartContext.Provider>
@@ -706,7 +774,27 @@ function CategoryBar() {
 }
 
 function CartDrawer() {
-  const { cartItems, totalCount, total, addToCart, removeFromCart, removeItemCompletely, drawerOpen, setDrawerOpen, checkout, status, remainingStock } = useCart();
+  const {
+    cartItems,
+    totalCount,
+    total,
+    discountedTotal,
+    discountCode,
+    setDiscountCode,
+    discountState,
+    discountMessage,
+    validateDiscountCode,
+    clearDiscountCode,
+    addToCart,
+    removeFromCart,
+    removeItemCompletely,
+    drawerOpen,
+    setDrawerOpen,
+    checkout,
+    status,
+    checkoutError,
+    remainingStock,
+  } = useCart();
 
   return (
     <>
@@ -764,9 +852,58 @@ function CartDrawer() {
 
         {cartItems.length > 0 && (
           <div className="px-6 py-5 border-t" style={{ borderColor: "rgba(240,236,224,0.12)" }}>
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <input
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      validateDiscountCode();
+                    }
+                  }}
+                  placeholder="Code promo (tirage du jour)"
+                  disabled={discountState === "valid"}
+                  className="flex-1 px-3 py-2 rounded-lg border text-sm disabled:opacity-60"
+                  style={{ ...mono, borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
+                />
+                {discountState === "valid" ? (
+                  <button
+                    onClick={clearDiscountCode}
+                    className="rounded-lg px-3 py-2 text-xs font-semibold border shrink-0"
+                    style={{ borderColor: colors.ink, color: colors.ink }}
+                  >
+                    Retirer
+                  </button>
+                ) : (
+                  <button
+                    onClick={validateDiscountCode}
+                    disabled={discountState === "checking" || !discountCode.trim()}
+                    className="rounded-lg px-3 py-2 text-xs font-semibold shrink-0 disabled:opacity-50"
+                    style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+                  >
+                    {discountState === "checking" ? "..." : "Appliquer"}
+                  </button>
+                )}
+              </div>
+              {discountMessage && (
+                <p className="mt-2 text-xs" style={{ color: discountState === "valid" ? colors.goldBright : "#e08a7d" }}>
+                  {discountMessage}
+                </p>
+              )}
+            </div>
+
             <div className="flex items-center justify-between mb-4">
               <span style={{ color: colors.ink, opacity: 0.7 }} className="text-sm">Total ({totalCount} article{totalCount > 1 ? "s" : ""})</span>
-              <span style={{ ...display, color: colors.ink, fontSize: "20px" }}>{total.toFixed(2)} €</span>
+              <span className="text-right">
+                {discountState === "valid" && (
+                  <span className="block text-xs line-through" style={{ color: colors.ink, opacity: 0.4 }}>{total.toFixed(2)} €</span>
+                )}
+                <span style={{ ...display, color: discountState === "valid" ? colors.goldBright : colors.ink, fontSize: "20px" }}>
+                  {discountedTotal.toFixed(2)} €
+                </span>
+              </span>
             </div>
             <button
               onClick={checkout}
@@ -777,7 +914,7 @@ function CartDrawer() {
               {status === "loading" ? "Redirection..." : "Payer en sécurité"}
             </button>
             {status === "error" && (
-              <p className="mt-3 text-xs" style={{ color: "#e08a7d" }}>Une erreur est survenue, réessaie dans un instant.</p>
+              <p className="mt-3 text-xs" style={{ color: "#e08a7d" }}>{checkoutError || "Une erreur est survenue, réessaie dans un instant."}</p>
             )}
           </div>
         )}
