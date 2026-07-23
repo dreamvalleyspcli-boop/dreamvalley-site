@@ -2032,6 +2032,82 @@ function StarRating({ rating, size = 15 }) {
   );
 }
 
+function LoseCardArt() {
+  return (
+    <svg viewBox="0 0 220 300" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect x="4" y="4" width="212" height="292" rx="16" fill={colors.parchmentSoft} stroke={colors.moss} strokeWidth="3" />
+      <rect x="16" y="16" width="188" height="150" rx="10" fill={colors.bark} opacity="0.55" />
+      <circle cx="110" cy="91" r="38" fill="none" stroke={colors.moss} strokeWidth="3" opacity="0.9" />
+      <path d="M110 68 L110 114 M87 91 L133 91" stroke={colors.moss} strokeWidth="4" strokeLinecap="round" opacity="0.9" />
+      <text x="110" y="192" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontSize="17" fill={colors.ink} opacity="0.85">
+        Énergie Vallée
+      </text>
+      <text x="110" y="215" textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="9" letterSpacing="2.5" fill={colors.moss}>
+        CARTE COMMUNE
+      </text>
+      <line x1="30" y1="230" x2="190" y2="230" stroke="rgba(240,236,224,0.12)" strokeWidth="1" />
+      <text x="110" y="256" textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="10.5" fill={colors.ink} opacity="0.55">
+        Retente ta chance
+      </text>
+      <text x="110" y="272" textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="10.5" fill={colors.ink} opacity="0.55">
+        demain
+      </text>
+    </svg>
+  );
+}
+
+function WinCardArt() {
+  return (
+    <div className="relative w-full h-full overflow-hidden rounded-2xl">
+      <svg viewBox="0 0 220 300" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="dvWinBorder" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={colors.gold} />
+            <stop offset="50%" stopColor={colors.goldBright} />
+            <stop offset="100%" stopColor={colors.tealGlow} />
+          </linearGradient>
+          <linearGradient id="dvWinArt" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={colors.gold} />
+            <stop offset="55%" stopColor={colors.goldBright} />
+            <stop offset="100%" stopColor={colors.tealGlow} />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="4" width="212" height="292" rx="16" fill={colors.parchmentSoft} stroke="url(#dvWinBorder)" strokeWidth="6" />
+        <rect x="16" y="16" width="188" height="150" rx="10" fill="url(#dvWinArt)" />
+        {[
+          [110, 55, 16], [60, 100, 9], [162, 92, 10], [80, 132, 7], [142, 130, 8],
+        ].map(([cx, cy, s], i) => (
+          <path
+            key={i}
+            d={SPARKLE_PATH}
+            transform={`translate(${cx} ${cy}) scale(${s / 12})`}
+            fill={colors.parchment}
+            opacity={0.85}
+          />
+        ))}
+        <text x="110" y="192" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontWeight="600" fontSize="18" fill={colors.goldBright}>
+          Éclat Doré
+        </text>
+        <text x="110" y="215" textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="9.5" letterSpacing="2.5" fill={colors.gold}>
+          ★ ULTRA RARE ★
+        </text>
+        <line x1="30" y1="230" x2="190" y2="230" stroke="rgba(240,236,224,0.15)" strokeWidth="1" />
+        <text x="110" y="256" textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="10.5" fill={colors.ink} opacity="0.85">
+          -10 % sur ta
+        </text>
+        <text x="110" y="272" textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="10.5" fill={colors.ink} opacity="0.85">
+          prochaine commande
+        </text>
+      </svg>
+      <div
+        className="dv-shine absolute top-0 bottom-0"
+        style={{ width: "30%", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)" }}
+        aria-hidden="true"
+      />
+    </div>
+  );
+}
+
 function TirageDuJourPage() {
   const [status, setStatus] = useState("idle"); // idle | pulling | result | already | error
   const [result, setResult] = useState(null); // { win, code }
@@ -2123,27 +2199,13 @@ function TirageDuJourPage() {
 
             {/* Face de la carte (résultat) */}
             <div
-              className="absolute inset-0 rounded-2xl border-2 flex flex-col items-center justify-center p-6 text-center"
+              className="absolute inset-0 rounded-2xl overflow-hidden"
               style={{
                 backfaceVisibility: "hidden",
                 transform: "rotateY(180deg)",
-                borderColor: result?.win ? colors.goldBright : "rgba(240,236,224,0.2)",
-                backgroundColor: colors.parchmentSoft,
               }}
             >
-              {result?.win ? (
-                <>
-                  <Gift size={40} color={colors.goldBright} />
-                  <p className="mt-3" style={{ ...display, color: colors.goldBright, fontSize: "20px" }}>Carte dorée !</p>
-                  <p className="mt-1 text-xs" style={{ color: colors.ink, opacity: 0.75 }}>-10 % sur ta prochaine commande</p>
-                </>
-              ) : (
-                <>
-                  <Leaf size={40} color={colors.moss} />
-                  <p className="mt-3" style={{ ...display, color: colors.ink, fontSize: "18px" }}>Pas cette fois</p>
-                  <p className="mt-1 text-xs" style={{ color: colors.ink, opacity: 0.6 }}>Retente ta chance demain</p>
-                </>
-              )}
+              {result?.win ? <WinCardArt /> : <LoseCardArt />}
             </div>
           </div>
         </div>
