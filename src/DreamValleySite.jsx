@@ -1171,6 +1171,14 @@ function AdminPage() {
   const [uploading, setUploading] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [form, setForm] = useState({ name: "", price: "", weight: "", tag: "", text: "", images: [], specsText: "", soon: false, category: "Produits Chinois" });
+  const formRef = useRef(null);
+
+  function scrollToForm() {
+    // On laisse le formulaire s'afficher avant de scroller vers lui
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  }
 
   function moveImage(index, direction) {
     setForm((f) => {
@@ -1238,6 +1246,7 @@ function AdminPage() {
     setEditingId(p.id);
     setAddError("");
     setShowAddForm(true);
+    scrollToForm();
   }
 
   function resetForm() {
@@ -1403,6 +1412,7 @@ function AdminPage() {
               } else {
                 resetForm();
                 setShowAddForm(true);
+                scrollToForm();
               }
             }}
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold"
@@ -1413,7 +1423,7 @@ function AdminPage() {
         </div>
 
         {showAddForm && (
-          <form onSubmit={handleSubmitProduct} className="mb-8 p-6 rounded-xl border space-y-3" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.15)" }}>
+          <form ref={formRef} onSubmit={handleSubmitProduct} className="mb-8 p-6 rounded-xl border space-y-3 scroll-mt-6" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.15)" }}>
             <p className="text-sm font-semibold" style={{ color: colors.ink }}>
               {editingId ? "Modifier le produit" : "Nouveau produit"}
             </p>
