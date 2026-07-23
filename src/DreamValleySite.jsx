@@ -1303,6 +1303,7 @@ function QuickLinks() {
 
 function AdminPage() {
   const [token, setToken] = useState(() => sessionStorage.getItem("dv_admin_token") || "");
+  const [activeTab, setActiveTab] = useState("catalogue");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [products, setProducts] = useState([]);
@@ -1538,195 +1539,230 @@ function AdminPage() {
     );
   }
 
+  const ADMIN_TABS = [
+    { id: "catalogue", label: "Catalogue & stock" },
+    { id: "avis", label: "Avis clients" },
+    { id: "jeu", label: "Codes du jeu" },
+    { id: "calendrier", label: "Calendrier" },
+    { id: "liens", label: "Liens rapides" },
+  ];
+
   return (
     <div className="min-h-screen px-5 sm:px-6 py-12" style={{ backgroundColor: colors.parchment }}>
       <div className="max-w-2xl mx-auto">
-        <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline mb-4" style={{ color: colors.ink, opacity: 0.65 }}>
-          <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
-        </a>
-
-        <QuickLinks />
-
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-8">
-          <h1 style={{ ...display, color: colors.ink, fontSize: "28px" }}>Catalogue & stock</h1>
-          <button
-            onClick={() => {
-              if (showAddForm) {
-                setShowAddForm(false);
-                resetForm();
-              } else {
-                resetForm();
-                setShowAddForm(true);
-                scrollToForm();
-              }
-            }}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold"
-            style={{ backgroundColor: colors.goldBright, color: colors.bark }}
-          >
-            <Plus size={14} /> {showAddForm ? "Annuler" : "Ajouter un produit"}
-          </button>
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+          <a href="/" className="inline-flex items-center gap-1.5 text-sm no-underline" style={{ color: colors.ink, opacity: 0.65 }}>
+            <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Retour au site
+          </a>
+          <a href="/tirage-du-jour" className="inline-flex items-center gap-1.5 text-sm no-underline" style={{ color: colors.goldBright }}>
+            <Gift size={14} /> Voir la page du jeu
+          </a>
         </div>
 
-        {showAddForm && (
-          <form ref={formRef} onSubmit={handleSubmitProduct} className="mb-8 p-6 rounded-xl border space-y-3 scroll-mt-6" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.15)" }}>
-            <p className="text-sm font-semibold" style={{ color: colors.ink }}>
-              {editingId ? "Modifier le produit" : "Nouveau produit"}
-            </p>
-            <input placeholder="Nom du produit *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
-            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <div className="flex gap-3 flex-wrap">
-              <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
-              <input placeholder="Poids en grammes (ex: 1400)" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className="flex-1 min-w-[160px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
-              <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+        <h1 className="mb-6" style={{ ...display, color: colors.ink, fontSize: "28px" }}>Administration</h1>
+
+        <div className="flex items-center gap-2 flex-wrap mb-8 pb-4 border-b" style={{ borderColor: "rgba(240,236,224,0.1)" }}>
+          {ADMIN_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="px-4 py-2 rounded-full text-xs font-semibold transition-colors"
+              style={
+                activeTab === tab.id
+                  ? { backgroundColor: colors.goldBright, color: colors.bark }
+                  : { backgroundColor: "transparent", color: colors.ink, border: "1px solid rgba(240,236,224,0.25)" }
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "catalogue" && (
+          <div>
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+              <h2 style={{ ...display, color: colors.ink, fontSize: "20px" }}>Catalogue & stock</h2>
+              <button
+                onClick={() => {
+                  if (showAddForm) {
+                    setShowAddForm(false);
+                    resetForm();
+                  } else {
+                    resetForm();
+                    setShowAddForm(true);
+                    scrollToForm();
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold"
+                style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+              >
+                <Plus size={14} /> {showAddForm ? "Annuler" : "Ajouter un produit"}
+              </button>
             </div>
-            <textarea placeholder={"Description (utilise Entrée pour aller à la ligne, ex: séparer les points par des retours à la ligne)"} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={4} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
 
-            <div>
-              <label className="text-xs font-semibold block mb-1.5" style={{ color: colors.ink }}>
-                Photos ({form.images.length}) — la première sera l'image principale
-              </label>
-
-              {form.images.length > 0 && (
-                <div className="space-y-2 mb-3">
-                  {form.images.map((url, i) => (
-                    <div key={`${url}-${i}`} className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.2)", backgroundColor: colors.parchment }}>
-                      <div className="w-12 h-12 rounded-md overflow-hidden shrink-0" style={{ backgroundColor: colors.bark }}>
-                        <img src={url} alt="" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs flex-1 truncate" style={{ ...mono, color: colors.moss }}>{url}</span>
-                      <button type="button" onClick={() => moveImage(i, -1)} disabled={i === 0} className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30" style={{ color: colors.ink }} aria-label="Monter">
-                        <ChevronUp size={16} />
-                      </button>
-                      <button type="button" onClick={() => moveImage(i, 1)} disabled={i === form.images.length - 1} className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30" style={{ color: colors.ink }} aria-label="Descendre">
-                        <ChevronDown size={16} />
-                      </button>
-                      <button type="button" onClick={() => removeImage(i)} className="w-6 h-6 rounded flex items-center justify-center" style={{ color: "#e08a7d" }} aria-label="Retirer">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+            {showAddForm && (
+              <form ref={formRef} onSubmit={handleSubmitProduct} className="mb-8 p-6 rounded-xl border space-y-3 scroll-mt-6" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.15)" }}>
+                <p className="text-sm font-semibold" style={{ color: colors.ink }}>
+                  {editingId ? "Modifier le produit" : "Nouveau produit"}
+                </p>
+                <input placeholder="Nom du produit *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
                   ))}
+                </select>
+                <div className="flex gap-3 flex-wrap">
+                  <input placeholder="Prix (ex: 12.90 ou 12,90)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} disabled={form.soon} className="flex-1 min-w-[140px] px-3 py-2 rounded-lg border disabled:opacity-50" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+                  <input placeholder="Poids en grammes (ex: 1400)" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className="flex-1 min-w-[160px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
+                  <input placeholder="Étiquette (ex: Scellé — à l'unité)" value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} className="flex-[2] min-w-[200px] px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
                 </div>
-              )}
+                <textarea placeholder={"Description (utilise Entrée pour aller à la ligne, ex: séparer les points par des retours à la ligne)"} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={4} className="w-full px-3 py-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }} />
 
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileUpload}
-                disabled={uploading}
-                className="w-full text-sm mb-2"
-                style={{ color: colors.ink }}
-              />
-              {uploading && <p className="text-xs mb-2" style={{ color: colors.moss }}>Envoi en cours...</p>}
+                <div>
+                  <label className="text-xs font-semibold block mb-1.5" style={{ color: colors.ink }}>
+                    Photos ({form.images.length}) — la première sera l'image principale
+                  </label>
 
-              <div className="flex gap-2">
-                <input
-                  placeholder="Ou colle une URL d'image directe"
-                  value={newImageUrl}
-                  onChange={(e) => setNewImageUrl(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addImageUrl();
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 rounded-lg border text-sm"
+                  {form.images.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {form.images.map((url, i) => (
+                        <div key={`${url}-${i}`} className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: "rgba(240,236,224,0.2)", backgroundColor: colors.parchment }}>
+                          <div className="w-12 h-12 rounded-md overflow-hidden shrink-0" style={{ backgroundColor: colors.bark }}>
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                          </div>
+                          <span className="text-xs flex-1 truncate" style={{ ...mono, color: colors.moss }}>{url}</span>
+                          <button type="button" onClick={() => moveImage(i, -1)} disabled={i === 0} className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30" style={{ color: colors.ink }} aria-label="Monter">
+                            <ChevronUp size={16} />
+                          </button>
+                          <button type="button" onClick={() => moveImage(i, 1)} disabled={i === form.images.length - 1} className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30" style={{ color: colors.ink }} aria-label="Descendre">
+                            <ChevronDown size={16} />
+                          </button>
+                          <button type="button" onClick={() => removeImage(i)} className="w-6 h-6 rounded flex items-center justify-center" style={{ color: "#e08a7d" }} aria-label="Retirer">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="w-full text-sm mb-2"
+                    style={{ color: colors.ink }}
+                  />
+                  {uploading && <p className="text-xs mb-2" style={{ color: colors.moss }}>Envoi en cours...</p>}
+
+                  <div className="flex gap-2">
+                    <input
+                      placeholder="Ou colle une URL d'image directe"
+                      value={newImageUrl}
+                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addImageUrl();
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 rounded-lg border text-sm"
+                      style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
+                    />
+                    <button type="button" onClick={addImageUrl} className="rounded-lg px-3 py-2 text-xs font-semibold" style={{ backgroundColor: colors.parchment, color: colors.ink, border: "1px solid rgba(240,236,224,0.25)" }}>
+                      Ajouter
+                    </button>
+                  </div>
+                </div>
+
+                <textarea
+                  placeholder={"Caractéristiques, une par ligne : Label: Valeur\nex: Langue: Français"}
+                  value={form.specsText}
+                  onChange={(e) => setForm({ ...form, specsText: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border"
                   style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
                 />
-                <button type="button" onClick={addImageUrl} className="rounded-lg px-3 py-2 text-xs font-semibold" style={{ backgroundColor: colors.parchment, color: colors.ink, border: "1px solid rgba(240,236,224,0.25)" }}>
-                  Ajouter
+                <label className="flex items-center gap-2 text-sm" style={{ color: colors.ink }}>
+                  <input type="checkbox" checked={form.soon} onChange={(e) => setForm({ ...form, soon: e.target.checked })} />
+                  Produit "à venir" (pas encore en vente, sans prix ni ajout au panier)
+                </label>
+                {addError && <p className="text-sm" style={{ color: "#e08a7d" }}>{addError}</p>}
+                <button type="submit" disabled={adding} className="rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
+                  {adding ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Créer le produit"}
                 </button>
-              </div>
-            </div>
+              </form>
+            )}
 
-            <textarea
-              placeholder={"Caractéristiques, une par ligne : Label: Valeur\nex: Langue: Français"}
-              value={form.specsText}
-              onChange={(e) => setForm({ ...form, specsText: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 rounded-lg border"
-              style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
-            />
-            <label className="flex items-center gap-2 text-sm" style={{ color: colors.ink }}>
-              <input type="checkbox" checked={form.soon} onChange={(e) => setForm({ ...form, soon: e.target.checked })} />
-              Produit "à venir" (pas encore en vente, sans prix ni ajout au panier)
-            </label>
-            {addError && <p className="text-sm" style={{ color: "#e08a7d" }}>{addError}</p>}
-            <button type="submit" disabled={adding} className="rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
-              {adding ? "Enregistrement..." : editingId ? "Enregistrer les modifications" : "Créer le produit"}
-            </button>
-          </form>
+            <div className="space-y-4">
+              {products.map((p) => (
+                <div key={p.id} className="flex items-center justify-between flex-wrap gap-3 p-5 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <ProductImage images={p.images} className="w-12 h-12 rounded-lg shrink-0" alt={p.name} />
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate" style={{ color: colors.ink }}>{p.name}</p>
+                      <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}{p.weight ? ` · ${p.weight} g` : ""}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: colors.gold }}>{p.category || "Sans catégorie"}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: colors.moss }}>
+                        {p.images && p.images.length > 0 ? `${p.images.length} image(s) enregistrée(s)` : "Aucune image enregistrée"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {!p.soon && (
+                      <>
+                        <input
+                          type="number"
+                          min="0"
+                          value={stock[p.id] ?? ""}
+                          onChange={(e) => setStock((s) => ({ ...s, [p.id]: Number(e.target.value) }))}
+                          className="w-20 px-3 py-2 rounded-lg border text-center"
+                          style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
+                          placeholder="—"
+                        />
+                        <button
+                          onClick={() => updateStock(p.id, stock[p.id] ?? 0)}
+                          disabled={saving[p.id]}
+                          className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60"
+                          style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+                        >
+                          {saving[p.id] ? "..." : "Enregistrer"}
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => startEdit(p)}
+                      className="rounded-full px-4 py-2 text-xs font-semibold border"
+                      style={{ borderColor: colors.ink, color: colors.ink }}
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProduct(p.id)}
+                      disabled={deleting[p.id]}
+                      className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60 border"
+                      style={{ borderColor: "#e08a7d", color: "#e08a7d" }}
+                    >
+                      {deleting[p.id] ? "..." : "Supprimer"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {products.length === 0 && (
+                <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Aucun produit pour l'instant.</p>
+              )}
+            </div>
+            <p className="text-xs mt-8" style={{ color: colors.ink, opacity: 0.6 }}>
+              Stock : laisse le champ vide = non suivi (toujours disponible). Mets 0 pour afficher "Rupture de stock".
+            </p>
+          </div>
         )}
 
-        <div className="space-y-4">
-          {products.map((p) => (
-            <div key={p.id} className="flex items-center justify-between flex-wrap gap-3 p-5 rounded-xl border" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
-              <div className="flex items-center gap-3 min-w-0">
-                <ProductImage images={p.images} className="w-12 h-12 rounded-lg shrink-0" alt={p.name} />
-                <div className="min-w-0">
-                  <p className="font-semibold truncate" style={{ color: colors.ink }}>{p.name}</p>
-                  <p className="text-xs mt-1" style={mono}>{p.soon ? "À venir" : `${Number(p.price).toFixed(2)} €`}{p.weight ? ` · ${p.weight} g` : ""}</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: colors.gold }}>{p.category || "Sans catégorie"}</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: colors.moss }}>
-                    {p.images && p.images.length > 0 ? `${p.images.length} image(s) enregistrée(s)` : "Aucune image enregistrée"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                {!p.soon && (
-                  <>
-                    <input
-                      type="number"
-                      min="0"
-                      value={stock[p.id] ?? ""}
-                      onChange={(e) => setStock((s) => ({ ...s, [p.id]: Number(e.target.value) }))}
-                      className="w-20 px-3 py-2 rounded-lg border text-center"
-                      style={{ borderColor: "rgba(240,236,224,0.25)", backgroundColor: colors.parchment, color: colors.ink }}
-                      placeholder="—"
-                    />
-                    <button
-                      onClick={() => updateStock(p.id, stock[p.id] ?? 0)}
-                      disabled={saving[p.id]}
-                      className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60"
-                      style={{ backgroundColor: colors.goldBright, color: colors.bark }}
-                    >
-                      {saving[p.id] ? "..." : "Enregistrer"}
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => startEdit(p)}
-                  className="rounded-full px-4 py-2 text-xs font-semibold border"
-                  style={{ borderColor: colors.ink, color: colors.ink }}
-                >
-                  Modifier
-                </button>
-                <button
-                  onClick={() => handleDeleteProduct(p.id)}
-                  disabled={deleting[p.id]}
-                  className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60 border"
-                  style={{ borderColor: "#e08a7d", color: "#e08a7d" }}
-                >
-                  {deleting[p.id] ? "..." : "Supprimer"}
-                </button>
-              </div>
-            </div>
-          ))}
-          {products.length === 0 && (
-            <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Aucun produit pour l'instant.</p>
-          )}
-        </div>
-        <p className="text-xs mt-8" style={{ color: colors.ink, opacity: 0.6 }}>
-          Stock : laisse le champ vide = non suivi (toujours disponible). Mets 0 pour afficher "Rupture de stock".
-        </p>
-
-        <ReviewsAdmin token={token} />
-        <GameCodesAdmin token={token} />
-        <CalendarAdmin token={token} />
+        {activeTab === "avis" && <ReviewsAdmin token={token} />}
+        {activeTab === "jeu" && <GameCodesAdmin token={token} />}
+        {activeTab === "calendrier" && <CalendarAdmin token={token} />}
+        {activeTab === "liens" && <QuickLinks />}
       </div>
     </div>
   );
@@ -1810,7 +1846,7 @@ function ReviewsAdmin({ token }) {
   }
 
   return (
-    <div className="mt-14">
+    <div className="mt-0">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <h2 style={{ ...display, color: colors.ink, fontSize: "22px" }}>Avis clients</h2>
         <button
@@ -1918,7 +1954,7 @@ function GameCodesAdmin({ token }) {
   const unusedCount = codes.filter((c) => !c.used).length;
 
   return (
-    <div className="mt-14">
+    <div className="mt-0">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
         <h2 style={{ ...display, color: colors.ink, fontSize: "22px" }}>Codes du tirage du jour</h2>
         <button onClick={loadCodes} className="rounded-full px-4 py-2 text-xs font-semibold border" style={{ borderColor: colors.ink, color: colors.ink }}>
@@ -2071,7 +2107,7 @@ function CalendarAdmin({ token }) {
   }
 
   return (
-    <div className="mt-14">
+    <div className="mt-0">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
         <h2 style={{ ...display, color: colors.ink, fontSize: "22px" }}>Calendrier de contenu</h2>
         <div className="flex items-center gap-2 flex-wrap">
