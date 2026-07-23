@@ -800,22 +800,23 @@ function CartDrawer() {
     <>
       {drawerOpen && <div className="fixed inset-0 z-30" style={{ backgroundColor: "rgba(13,27,42,0.6)" }} onClick={() => setDrawerOpen(false)} />}
       <aside
-        className="fixed top-0 right-0 h-full z-40 flex flex-col transition-transform duration-300"
+        className="fixed top-0 right-0 z-40 flex flex-col transition-transform duration-300"
         style={{
           width: "min(420px, 100vw)",
+          height: "100dvh",
           backgroundColor: colors.parchmentSoft,
           transform: drawerOpen ? "translateX(0)" : "translateX(100%)",
           boxShadow: drawerOpen ? "-8px 0 24px rgba(13,27,42,0.4)" : "none",
         }}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: "rgba(240,236,224,0.12)" }}>
+        <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: "rgba(240,236,224,0.12)" }}>
           <h3 style={{ ...display, color: colors.ink, fontSize: "20px" }}>Ton panier</h3>
           <button onClick={() => setDrawerOpen(false)} style={{ color: colors.ink }} aria-label="Fermer">
             <X size={22} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4" style={{ minHeight: 0 }}>
           {cartItems.length === 0 ? (
             <p className="text-sm mt-8 text-center" style={{ color: colors.ink, opacity: 0.6 }}>
               Ton panier est vide pour l'instant.
@@ -851,7 +852,7 @@ function CartDrawer() {
         </div>
 
         {cartItems.length > 0 && (
-          <div className="px-6 py-5 border-t" style={{ borderColor: "rgba(240,236,224,0.12)" }}>
+          <div className="px-6 py-5 border-t shrink-0" style={{ borderColor: "rgba(240,236,224,0.12)" }}>
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <input
