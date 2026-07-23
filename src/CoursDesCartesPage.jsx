@@ -20,6 +20,17 @@ const mono = { fontFamily: "'JetBrains Mono', monospace" };
 
 const API_URL = "https://dreamvalley-card-prices.dreamvalleyspcli.workers.dev/card-trends";
 
+const LANGUAGE_LABELS = {
+  english: "Anglais",
+  japanese: "Japonais",
+  french: "Francais",
+};
+
+function formatPrice(item) {
+  const symbol = item.currency === "EUR" ? "EUR " : "$";
+  return symbol + item.price.toFixed(2);
+}
+
 function Sparkline({ history }) {
   if (!history || history.length < 2) {
     return (
@@ -110,12 +121,12 @@ function CardRow({ item }) {
             {item.name}
           </p>
           <p style={{ ...mono, fontSize: 12, color: colors.ink, opacity: 0.6, margin: "2px 0 0" }}>
-            {item.setName} - {item.type === "sealed" ? "Produit scelle" : "Carte"}
+            {item.setName} - {item.type === "sealed" ? "Produit scelle" : "Carte"} - {LANGUAGE_LABELS[item.language] || item.language}
           </p>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <p style={{ ...mono, fontSize: 16, fontWeight: 600, color: colors.ink, margin: 0 }}>
-            ${item.price.toFixed(2)}
+            {formatPrice(item)}
           </p>
           {hasChange ? (
             <p
@@ -155,6 +166,7 @@ export default function CoursDesCartesPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [langFilter, setLangFilter] = useState("all");
 
   useEffect(() => {
     fetch(API_URL)
@@ -164,7 +176,11 @@ export default function CoursDesCartesPage() {
   }, []);
 
   const items = data?.items || [];
-  const filtered = items.filter((i) => filter === "all" || i.type === filter);
+  const filtered = items.filter((i) => {
+    const typeOk = filter === "all" || i.type === filter;
+    const langOk = langFilter === "all" || i.language === langFilter;
+    return typeOk && langOk;
+  });
 
   return (
     <div style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
@@ -176,13 +192,13 @@ export default function CoursDesCartesPage() {
         <h1 style={{ ...display, fontSize: 40, fontWeight: 700, color: colors.ink, margin: "16px 0 8px" }}>
           Cours des cartes
         </h1>
-        <p style={{ ...mono, fontSize: 14, color: colors.ink, opacity: 0.7, marginBottom: 32 }}>
+        <p style={{ ...mono, fontSize: 14, color: colors.ink, opacity: 0.7, marginBottom: 24 }}>
           {data?.updatedAt
             ? "Mis a jour le " + new Date(data.updatedAt).toLocaleDateString("fr-FR") + " - Suivi quotidien automatique"
             : "Chargement des prix..."}
         </p>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
           {[
             { key: "all", label: "Tout" },
             { key: "card", label: "Cartes" },
@@ -199,6 +215,32 @@ export default function CoursDesCartesPage() {
                 border: `1px solid ${colors.ink}30`,
                 backgroundColor: filter === f.key ? colors.goldBright : "transparent",
                 color: filter === f.key ? colors.bark : colors.ink,
+                cursor: "pointer",
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+          {[
+            { key: "all", label: "Toutes langues" },
+            { key: "english", label: "Anglais" },
+            { key: "japanese", label: "Japonais" },
+            { key: "french", label: "Francais" },
+          ].map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setLangFilter(f.key)}
+              style={{
+                ...mono,
+                fontSize: 12,
+                padding: "6px 14px",
+                borderRadius: 999,
+                border: `1px solid ${colors.teal}50`,
+                backgroundColor: langFilter === f.key ? colors.teal : "transparent",
+                color: langFilter === f.key ? colors.bark : colors.tealGlow,
                 cursor: "pointer",
               }}
             >

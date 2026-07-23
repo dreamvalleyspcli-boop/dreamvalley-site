@@ -951,6 +951,8 @@ function CatalogueCard({ p, onOpenModal }) {
 function Catalogue() {
   const { products, activeCategory, categories } = useCart();
   const [activeProduct, setActiveProduct] = useState(null);
+  const [showAll, setShowAll] = useState(false);
+  const HOME_LIMIT = 6;
 
   useEffect(() => {
     if (products.length === 0) return;
@@ -961,8 +963,14 @@ function Catalogue() {
     }
   }, [products]);
 
+  useEffect(() => {
+    setShowAll(false);
+  }, [activeCategory]);
+
   const filtered = activeCategory ? products.filter((p) => p.category === activeCategory) : products;
   const isEmptyCategory = activeCategory && products.length > 0 && filtered.length === 0;
+  const isLimited = !activeCategory && !showAll && filtered.length > HOME_LIMIT;
+  const displayed = isLimited ? filtered.slice(0, HOME_LIMIT) : filtered;
 
   return (
     <section id="catalogue" className="py-16 sm:py-20" style={{ backgroundColor: colors.parchment }}>
@@ -992,12 +1000,27 @@ function Catalogue() {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {filtered.map((p, i) => (
+          {displayed.map((p, i) => (
             <Reveal key={p.id} delay={(i % 3) * 100}>
               <CatalogueCard p={p} onOpenModal={setActiveProduct} />
             </Reveal>
           ))}
         </div>
+
+        {isLimited && (
+          <Reveal>
+            <div className="mt-10 flex justify-center">
+              <button
+                onClick={() => setShowAll(true)}
+                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5"
+                style={{ backgroundColor: colors.goldBright, color: colors.bark }}
+              >
+                Voir tout le catalogue
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </Reveal>
+        )}
       </div>
 
       <ProductModal product={activeProduct} onClose={() => setActiveProduct(null)} />
