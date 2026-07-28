@@ -569,8 +569,9 @@ export default function CoursDesCartesPage() {
   const [langFilter, setLangFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [setFilterValue, setSetFilterValue] = useState("all");
-  const [sortBy, setSortBy] = useState("change-desc");
+  const [sortBy, setSortBy] = useState("price-desc");
   const [viewMode, setViewMode] = useState("grid");
+  const [viewTab, setViewTab] = useState("all"); // "all" | "gainers"
   const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
@@ -592,17 +593,24 @@ export default function CoursDesCartesPage() {
     const langOk = langFilter === "all" || i.language === langFilter;
     const setOk = setFilterValue === "all" || i.setName === setFilterValue;
     const searchOk = !search.trim() || i.name.toLowerCase().includes(search.trim().toLowerCase());
-    return typeOk && langOk && setOk && searchOk;
+    const tabOk = viewTab === "all" || (typeof i.change7d === "number" && i.change7d > 0);
+    return typeOk && langOk && setOk && searchOk && tabOk;
   });
 
+  // Sur l'onglet "Plus fortes hausses", le tri est toujours par % décroissant
+  // -- le menu de tri normal ne s'applique qu'à la vue "Tout".
+  const effectiveSortBy = viewTab === "gainers" ? "change-desc" : sortBy;
+
   const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === "price-desc") return b.price - a.price;
-    if (sortBy === "price-asc") return a.price - b.price;
-    if (sortBy === "change-desc") return (b.change7d ?? -999) - (a.change7d ?? -999);
-    if (sortBy === "change-asc") return (a.change7d ?? 999) - (b.change7d ?? 999);
-    if (sortBy === "name-asc") return a.name.localeCompare(b.name);
+    if (effectiveSortBy === "price-desc") return b.price - a.price;
+    if (effectiveSortBy === "price-asc") return a.price - b.price;
+    if (effectiveSortBy === "change-desc") return (b.change7d ?? -Infinity) - (a.change7d ?? -Infinity);
+    if (effectiveSortBy === "change-asc") return (a.change7d ?? Infinity) - (b.change7d ?? Infinity);
+    if (effectiveSortBy === "name-asc") return a.name.localeCompare(b.name);
     return 0;
   });
+
+  const gainersCount = items.filter((i) => typeof i.change7d === "number" && i.change7d > 0).length;
 
   const selectStyle = {
     ...mono,
@@ -654,6 +662,46 @@ export default function CoursDesCartesPage() {
           </div>
         </div>
 
+        {/* Onglets de vue */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <button
+            onClick={() => setViewTab("all")}
+            style={{
+              ...mono,
+              fontSize: 13,
+              fontWeight: 600,
+              padding: "10px 20px",
+              borderRadius: 10,
+              border: "none",
+              backgroundColor: viewTab === "all" ? colors.goldBright : colors.parchmentSoft,
+              color: viewTab === "all" ? colors.bark : colors.ink,
+              cursor: "pointer",
+            }}
+          >
+            Tout
+          </button>
+          <button
+            onClick={() => setViewTab("gainers")}
+            style={{
+              ...mono,
+              fontSize: 13,
+              fontWeight: 600,
+              padding: "10px 20px",
+              borderRadius: 10,
+              border: "none",
+              backgroundColor: viewTab === "gainers" ? positive : colors.parchmentSoft,
+              color: viewTab === "gainers" ? colors.bark : colors.ink,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <TrendingUp size={14} />
+            Plus fortes hausses ({gainersCount})
+          </button>
+        </div>
+
         {/* Barre de filtres */}
         <div
           style={{
@@ -696,7 +744,12 @@ export default function CoursDesCartesPage() {
           </select>
 
           {/* Tri */}
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ ...selectStyle, flex: "1 1 160px" }}>
+          <select
+            value={effectiveSortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            disabled={viewTab === "gainers"}
+            style={{ ...selectStyle, flex: "1 1 160px", opacity: viewTab === "gainers" ? 0.5 : 1, cursor: viewTab === "gainers" ? "not-allowed" : "pointer" }}
+          >
             <option value="change-desc">Plus forte hausse</option>
             <option value="change-asc">Plus forte baisse</option>
             <option value="price-desc">Prix decroissant</option>
