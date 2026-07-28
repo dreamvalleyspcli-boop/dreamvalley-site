@@ -49,6 +49,9 @@ function formatPrice(item) {
 }
 
 function Sparkline({ history }) {
+  const [hoverIndex, setHoverIndex] = useState(null);
+  const svgRef = React.useRef(null);
+
   if (!history || history.length < 2) {
     return (
       <p style={{ ...mono, fontSize: 13, color: colors.ink, opacity: 0.6 }}>
@@ -75,8 +78,38 @@ function Sparkline({ history }) {
   const isUp = history[history.length - 1].price >= history[0].price;
   const lineColor = isUp ? positive : negative;
 
+  function indexFromClientX(clientX) {
+    const rect = svgRef.current.getBoundingClientRect();
+    const fraction = (clientX - rect.left) / rect.width;
+    const xSvg = fraction * width;
+    const raw = ((xSvg - padding) / (width - padding * 2)) * (history.length - 1);
+    return Math.max(0, Math.min(history.length - 1, Math.round(raw)));
+  }
+
+  function handleMove(clientX) {
+    setHoverIndex(indexFromClientX(clientX));
+  }
+
+  const hovered = hoverIndex !== null ? history[hoverIndex] : null;
+  const hoveredPoint = hoverIndex !== null ? points[hoverIndex].split(",").map(Number) : null;
+
+  // Tooltip : on évite qu'il déborde du cadre en le recalant près des bords.
+  let tooltipX = hoveredPoint ? hoveredPoint[0] : 0;
+  const tooltipWidth = 96;
+  if (tooltipX < tooltipWidth / 2 + padding) tooltipX = tooltipWidth / 2 + padding;
+  if (tooltipX > width - tooltipWidth / 2 - padding) tooltipX = width - tooltipWidth / 2 - padding;
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "auto" }}>
+    <svg
+      ref={svgRef}
+      viewBox={`0 0 ${width} ${height}`}
+      style={{ width: "100%", height: "auto", cursor: "crosshair", touchAction: "pan-y" }}
+      onMouseMove={(e) => handleMove(e.clientX)}
+      onMouseLeave={() => setHoverIndex(null)}
+      onTouchStart={(e) => handleMove(e.touches[0].clientX)}
+      onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+      onTouchEnd={() => setHoverIndex(null)}
+    >
       <polyline
         points={points.join(" ")}
         fill="none"
@@ -89,6 +122,35 @@ function Sparkline({ history }) {
         const [x, y] = points[i].split(",");
         return <circle key={p.date} cx={x} cy={y} r="2.5" fill={lineColor} />;
       })}
+
+      {hoveredPoint && (
+        <>
+          {/* Ligne verticale de repère */}
+          <line
+            x1={hoveredPoint[0]}
+            y1={padding * 0.3}
+            x2={hoveredPoint[0]}
+            y2={height - padding}
+            stroke={colors.ink}
+            strokeOpacity="0.25"
+            strokeWidth="1"
+          />
+          {/* Point mis en évidence */}
+          <circle cx={hoveredPoint[0]} cy={hoveredPoint[1]} r="5" fill={colors.goldBright} stroke={colors.bark} strokeWidth="1.5" />
+
+          {/* Info-bulle */}
+          <g transform={`translate(${tooltipX - tooltipWidth / 2}, ${Math.max(2, hoveredPoint[1] - 46)})`}>
+            <rect width={tooltipWidth} height={36} rx={6} fill={colors.bark} stroke={colors.goldBright} strokeWidth="1" />
+            <text x={tooltipWidth / 2} y={14} textAnchor="middle" style={{ ...mono, fontSize: 9, fill: colors.ink, opacity: 0.7 }}>
+              {hovered.date}
+            </text>
+            <text x={tooltipWidth / 2} y={28} textAnchor="middle" style={{ ...mono, fontSize: 13, fontWeight: 700, fill: colors.goldBright }}>
+              ${hovered.price.toFixed(2)}
+            </text>
+          </g>
+        </>
+      )}
+
       <text x={padding} y={height - 8} style={{ ...mono, fontSize: 11, fill: colors.ink, opacity: 0.6 }}>
         {history[0].date}
       </text>
