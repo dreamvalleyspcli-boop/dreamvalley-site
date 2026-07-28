@@ -468,11 +468,110 @@ function CardRow({ item }) {
   );
 }
 
+function CardTile({ item, onClick }) {
+  const hasChange = item.change7d !== null && item.change7d !== undefined;
+  const isUp = hasChange && item.change7d > 0;
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        cursor: "pointer",
+        backgroundColor: colors.parchmentSoft,
+        borderRadius: 12,
+        overflow: "hidden",
+        border: `1px solid ${colors.ink}15`,
+        transition: "transform 0.15s ease",
+      }}
+    >
+      <div style={{ position: "relative", aspectRatio: "5/7", backgroundColor: colors.bark }}>
+        {item.imageUrl ? (
+          <img src={item.imageUrl} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ ...mono, fontSize: 10, color: colors.ink, opacity: 0.4 }}>Pas d'image</span>
+          </div>
+        )}
+        <span
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            ...mono,
+            fontSize: 11,
+            fontWeight: 700,
+            padding: "3px 8px",
+            borderRadius: 999,
+            backgroundColor: colors.goldBright,
+            color: colors.bark,
+          }}
+        >
+          {formatPrice(item)}
+        </span>
+        {hasChange && (
+          <span
+            style={{
+              position: "absolute",
+              bottom: 6,
+              left: 6,
+              ...mono,
+              fontSize: 10,
+              fontWeight: 600,
+              padding: "2px 7px",
+              borderRadius: 999,
+              backgroundColor: isUp ? positive : negative,
+              color: colors.bark,
+            }}
+          >
+            {isUp ? "+" : ""}
+            {item.change7d}%
+          </span>
+        )}
+      </div>
+      <div style={{ padding: "8px 10px" }}>
+        <p
+          style={{
+            ...display,
+            fontSize: 13,
+            fontWeight: 600,
+            color: colors.ink,
+            margin: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {item.name}
+        </p>
+        <p
+          style={{
+            ...mono,
+            fontSize: 10,
+            color: colors.ink,
+            opacity: 0.55,
+            margin: "2px 0 0",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {item.setName}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function CoursDesCartesPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [langFilter, setLangFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [setFilterValue, setSetFilterValue] = useState("all");
+  const [sortBy, setSortBy] = useState("change-desc");
+  const [viewMode, setViewMode] = useState("grid");
+  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     fetch(API_URL)
@@ -482,28 +581,165 @@ export default function CoursDesCartesPage() {
   }, []);
 
   const items = data?.items || [];
+
+  const availableSets = React.useMemo(() => {
+    const set = new Set(items.map((i) => i.setName).filter(Boolean));
+    return Array.from(set).sort();
+  }, [items]);
+
   const filtered = items.filter((i) => {
     const typeOk = filter === "all" || i.type === filter;
     const langOk = langFilter === "all" || i.language === langFilter;
-    return typeOk && langOk;
+    const setOk = setFilterValue === "all" || i.setName === setFilterValue;
+    const searchOk = !search.trim() || i.name.toLowerCase().includes(search.trim().toLowerCase());
+    return typeOk && langOk && setOk && searchOk;
   });
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === "price-desc") return b.price - a.price;
+    if (sortBy === "price-asc") return a.price - b.price;
+    if (sortBy === "change-desc") return (b.change7d ?? -999) - (a.change7d ?? -999);
+    if (sortBy === "change-asc") return (a.change7d ?? 999) - (b.change7d ?? 999);
+    if (sortBy === "name-asc") return a.name.localeCompare(b.name);
+    return 0;
+  });
+
+  const selectStyle = {
+    ...mono,
+    fontSize: 12,
+    padding: "8px 12px",
+    borderRadius: 8,
+    border: `1px solid ${colors.ink}25`,
+    backgroundColor: colors.parchmentSoft,
+    color: colors.ink,
+    cursor: "pointer",
+  };
 
   return (
     <div style={{ backgroundColor: colors.parchment, minHeight: "100vh" }}>
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "64px 20px 100px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "64px 20px 100px" }}>
         <a href="/#top" style={{ ...mono, fontSize: 13, color: colors.ink, opacity: 0.6, textDecoration: "none" }}>
           Retour a l'accueil
         </a>
 
-        <h1 style={{ ...display, fontSize: 40, fontWeight: 700, color: colors.ink, margin: "16px 0 8px" }}>
-          Cours des cartes
-        </h1>
-        <p style={{ ...mono, fontSize: 14, color: colors.ink, opacity: 0.7, marginBottom: 24 }}>
-          {data?.updatedAt
-            ? "Mis a jour le " + new Date(data.updatedAt).toLocaleDateString("fr-FR") + " - Suivi quotidien automatique"
-            : "Chargement des prix..."}
-        </p>
+        {/* En-tête avec statistiques */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: 16,
+            marginTop: 16,
+            marginBottom: 24,
+          }}
+        >
+          <div>
+            <h1 style={{ ...display, fontSize: 36, fontWeight: 700, color: colors.ink, margin: 0 }}>Cours des cartes</h1>
+            <p style={{ ...mono, fontSize: 13, color: colors.ink, opacity: 0.7, marginTop: 6 }}>
+              {data?.updatedAt
+                ? "Mis a jour le " + new Date(data.updatedAt).toLocaleDateString("fr-FR") + " - Suivi quotidien automatique"
+                : "Chargement des prix..."}
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ backgroundColor: colors.teal, borderRadius: 10, padding: "8px 16px", textAlign: "center" }}>
+              <p style={{ ...display, fontSize: 20, fontWeight: 700, color: colors.bark, margin: 0 }}>{availableSets.length}</p>
+              <p style={{ ...mono, fontSize: 9, color: colors.bark, margin: 0, letterSpacing: 0.5 }}>SETS</p>
+            </div>
+            <div style={{ backgroundColor: colors.goldBright, borderRadius: 10, padding: "8px 16px", textAlign: "center" }}>
+              <p style={{ ...display, fontSize: 20, fontWeight: 700, color: colors.bark, margin: 0 }}>{items.length}</p>
+              <p style={{ ...mono, fontSize: 9, color: colors.bark, margin: 0, letterSpacing: 0.5 }}>ELEMENTS SUIVIS</p>
+            </div>
+          </div>
+        </div>
 
+        {/* Barre de filtres */}
+        <div
+          style={{
+            backgroundColor: colors.parchmentSoft,
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 20,
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          {/* Recherche */}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher une carte..."
+            style={{
+              ...mono,
+              fontSize: 13,
+              padding: "9px 14px",
+              borderRadius: 8,
+              border: `1px solid ${colors.ink}25`,
+              backgroundColor: colors.bark,
+              color: colors.ink,
+              flex: "2 1 200px",
+              minWidth: 160,
+            }}
+          />
+
+          {/* Filtre par set */}
+          <select value={setFilterValue} onChange={(e) => setSetFilterValue(e.target.value)} style={{ ...selectStyle, flex: "1 1 160px" }}>
+            <option value="all">Tous les sets</option>
+            {availableSets.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+
+          {/* Tri */}
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ ...selectStyle, flex: "1 1 160px" }}>
+            <option value="change-desc">Plus forte hausse</option>
+            <option value="change-asc">Plus forte baisse</option>
+            <option value="price-desc">Prix decroissant</option>
+            <option value="price-asc">Prix croissant</option>
+            <option value="name-asc">Nom (A-Z)</option>
+          </select>
+
+          {/* Bascule grille / liste */}
+          <div style={{ display: "flex", gap: 4, backgroundColor: colors.bark, borderRadius: 8, padding: 3 }}>
+            <button
+              onClick={() => setViewMode("grid")}
+              style={{
+                ...mono,
+                fontSize: 11,
+                padding: "6px 12px",
+                borderRadius: 6,
+                border: "none",
+                backgroundColor: viewMode === "grid" ? colors.goldBright : "transparent",
+                color: viewMode === "grid" ? colors.bark : colors.ink,
+                cursor: "pointer",
+              }}
+            >
+              Grille
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              style={{
+                ...mono,
+                fontSize: 11,
+                padding: "6px 12px",
+                borderRadius: 6,
+                border: "none",
+                backgroundColor: viewMode === "list" ? colors.goldBright : "transparent",
+                color: viewMode === "list" ? colors.bark : colors.ink,
+                cursor: "pointer",
+              }}
+            >
+              Liste
+            </button>
+          </div>
+        </div>
+
+        {/* Type de produit */}
         <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
           {[
             { key: "all", label: "Tout" },
@@ -529,6 +765,7 @@ export default function CoursDesCartesPage() {
           ))}
         </div>
 
+        {/* Langue */}
         <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
           {[
             { key: "all", label: "Toutes langues" },
@@ -563,15 +800,37 @@ export default function CoursDesCartesPage() {
 
         {!error && !data && <p style={{ ...mono, color: colors.ink, opacity: 0.6 }}>Chargement...</p>}
 
-        {!error && data && filtered.length === 0 && (
+        {!error && data && sorted.length === 0 && (
           <p style={{ ...mono, color: colors.ink, opacity: 0.6 }}>Rien a afficher pour ce filtre.</p>
         )}
 
-        <div>
-          {filtered.map((item) => (
-            <CardRow key={item.id} item={item} />
-          ))}
-        </div>
+        {!error && data && sorted.length > 0 && (
+          <p style={{ ...mono, fontSize: 12, color: colors.ink, opacity: 0.5, marginBottom: 12 }}>
+            {sorted.length} resultat{sorted.length > 1 ? "s" : ""}
+          </p>
+        )}
+
+        {viewMode === "grid" ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+              gap: 14,
+            }}
+          >
+            {sorted.map((item) => (
+              <CardTile key={item.id} item={item} onClick={() => setSelectedItem(item)} />
+            ))}
+          </div>
+        ) : (
+          <div>
+            {sorted.map((item) => (
+              <CardRow key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+
+        {selectedItem && <CardDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
       </div>
     </div>
   );
