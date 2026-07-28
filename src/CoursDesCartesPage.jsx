@@ -91,6 +91,8 @@ function CardRow({ item }) {
   const [open, setOpen] = useState(false);
   const hasChange = item.change7d !== null && item.change7d !== undefined;
   const isUp = hasChange && item.change7d > 0;
+  const days = item.changeDays || 7;
+  const isApprox = !!item.changeIsApproximate;
 
   return (
     <div style={{ borderBottom: `1px solid ${colors.ink}20`, cursor: "pointer" }}>
@@ -129,22 +131,29 @@ function CardRow({ item }) {
             {formatPrice(item)}
           </p>
           {hasChange ? (
-            <p
-              style={{
-                ...mono,
-                fontSize: 13,
-                margin: "2px 0 0",
-                color: isUp ? positive : negative,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                gap: 4,
-              }}
-            >
-              {isUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-              {isUp ? "+" : ""}
-              {item.change7d}% (7j)
-            </p>
+            <>
+              <p
+                style={{
+                  ...mono,
+                  fontSize: 13,
+                  margin: "2px 0 0",
+                  color: isUp ? positive : negative,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 4,
+                }}
+              >
+                {isUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                {isUp ? "+" : ""}
+                {item.change7d}% ({days}j)
+              </p>
+              {isApprox && (
+                <p style={{ ...mono, fontSize: 10, color: colors.ink, opacity: 0.45, margin: "1px 0 0" }}>
+                  estimation, historique encore court
+                </p>
+              )}
+            </>
           ) : (
             <p style={{ ...mono, fontSize: 12, color: colors.ink, opacity: 0.4, margin: "2px 0 0" }}>
               -- (bientot)
