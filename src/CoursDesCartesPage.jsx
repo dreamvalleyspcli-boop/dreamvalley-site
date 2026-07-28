@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, ChevronDown, ChevronUp } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, X, ExternalLink } from "lucide-react";
 
 const colors = {
   parchment: "#181F31",
@@ -19,11 +19,28 @@ const display = { fontFamily: "'Fraunces', serif" };
 const mono = { fontFamily: "'JetBrains Mono', monospace" };
 
 const API_URL = "https://dreamvalley-card-prices.dreamvalleyspcli.workers.dev/card-trends";
+const DETAIL_API_URL = "https://dreamvalley-card-prices.dreamvalleyspcli.workers.dev/card-detail";
 
 const LANGUAGE_LABELS = {
   english: "Anglais",
   japanese: "Japonais",
   french: "Francais",
+};
+
+const GRADE_ORDER = ["psa10", "psa9", "psa8", "psa7", "psa6", "cgc10", "cgc9", "cgc8", "bgs9_5", "bgs9", "bgs8_5", "ungraded"];
+const GRADE_LABELS = {
+  psa10: "PSA 10",
+  psa9: "PSA 9",
+  psa8: "PSA 8",
+  psa7: "PSA 7",
+  psa6: "PSA 6",
+  cgc10: "CGC 10",
+  cgc9: "CGC 9",
+  cgc8: "CGC 8",
+  bgs9_5: "BGS 9.5",
+  bgs9: "BGS 9",
+  bgs8_5: "BGS 8.5",
+  ungraded: "Non gradee",
 };
 
 function formatPrice(item) {
@@ -87,18 +104,215 @@ function Sparkline({ history }) {
   );
 }
 
+const RANGE_OPTIONS = [
+  { key: "7", label: "7J", days: 7 },
+  { key: "30", label: "30J", days: 30 },
+  { key: "90", label: "90J", days: 90 },
+  { key: "all", label: "TOUT", days: null },
+];
+
+function DetailChart({ history, currency }) {
+  const [range, setRange] = useState("30");
+
+  if (!history || history.length < 2) {
+    return (
+      <p style={{ ...mono, fontSize: 13, color: colors.ink, opacity: 0.6 }}>
+        Pas encore assez d'historique pour tracer un graphique.
+      </p>
+    );
+  }
+
+  const activeRange = RANGE_OPTIONS.find((r) => r.key === range);
+  const sliced = activeRange.days ? history.slice(-activeRange.days) : history;
+  const points = sliced.length >= 2 ? sliced : history.slice(-2);
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+        {RANGE_OPTIONS.map((r) => (
+          <button
+            key={r.key}
+            onClick={() => setRange(r.key)}
+            style={{
+              ...mono,
+              fontSize: 11,
+              padding: "4px 10px",
+              borderRadius: 999,
+              border: `1px solid ${colors.ink}25`,
+              backgroundColor: range === r.key ? colors.goldBright : "transparent",
+              color: range === r.key ? colors.bark : colors.ink,
+              cursor: "pointer",
+            }}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+      <Sparkline history={points} />
+      <p style={{ ...mono, fontSize: 10, color: colors.ink, opacity: 0.4, marginTop: 4 }}>
+        Prix "Near Mint" ({currency === "EUR" ? "Cardmarket" : "TCGPlayer"})
+      </p>
+    </div>
+  );
+}
+
+function CardDetailModal({ item, onClose }) {
+  const [detail, setDetail] = useState(null);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+    setDetail(null);
+    const params = new URLSearchParams({
+      tcgPlayerId: item.tcgPlayerId || item.id.split("-").pop(),
+      language: item.language || "english",
+    });
+    fetch(`${DETAIL_API_URL}?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.error) throw new Error(d.error);
+        setDetail(d);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [item]);
+
+  const gradesWithData = detail
+    ? GRADE_ORDER.filter((g) => detail.psaPrices?.[g]?.price != null)
+    : [];
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(13,27,42,0.85)",
+        zIndex: 50,
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "center",
+        padding: "40px 16px",
+        overflowY: "auto",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: colors.parchmentSoft,
+          borderRadius: 16,
+          maxWidth: 640,
+          width: "100%",
+          padding: 24,
+          border: `1px solid ${colors.ink}15`,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 14 }}>
+            {item.imageUrl && (
+              <img src={item.imageUrl} alt="" style={{ width: 64, height: 90, objectFit: "contain", flexShrink: 0 }} />
+            )}
+            <div>
+              <p style={{ ...display, fontSize: 20, fontWeight: 600, color: colors.ink, margin: 0 }}>{item.name}</p>
+              <p style={{ ...mono, fontSize: 12, color: colors.ink, opacity: 0.6, margin: "4px 0 0" }}>
+                {item.setName} - {LANGUAGE_LABELS[item.language] || item.language}
+              </p>
+              {detail?.tcgPlayerUrl && (
+                <a
+                  href={detail.tcgPlayerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ ...mono, fontSize: 11, color: colors.tealGlow, display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6, textDecoration: "none" }}
+                >
+                  Voir sur TCGPlayer <ExternalLink size={11} />
+                </a>
+              )}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}>
+            <X size={20} color={colors.ink} />
+          </button>
+        </div>
+
+        {loading && <p style={{ ...mono, fontSize: 13, color: colors.ink, opacity: 0.6 }}>Chargement des details...</p>}
+
+        {error && (
+          <p style={{ ...mono, fontSize: 13, color: negative }}>
+            Details indisponibles pour le moment, reessaie un peu plus tard.
+          </p>
+        )}
+
+        {detail && !error && (
+          <>
+            <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 140, backgroundColor: colors.bark, borderRadius: 10, padding: 12 }}>
+                <p style={{ ...mono, fontSize: 10, color: colors.moss, margin: 0, letterSpacing: 0.5 }}>TCGPLAYER (USD)</p>
+                <p style={{ ...display, fontSize: 22, fontWeight: 600, color: colors.ink, margin: "4px 0 0" }}>
+                  {detail.priceUsd != null ? `$${detail.priceUsd.toFixed(2)}` : "--"}
+                </p>
+              </div>
+              {detail.cardmarket && (
+                <div style={{ flex: 1, minWidth: 140, backgroundColor: colors.bark, borderRadius: 10, padding: 12 }}>
+                  <p style={{ ...mono, fontSize: 10, color: colors.gold, margin: 0, letterSpacing: 0.5 }}>CARDMARKET (EUR)</p>
+                  <p style={{ ...display, fontSize: 22, fontWeight: 600, color: colors.ink, margin: "4px 0 0" }}>
+                    {detail.cardmarket.marketEur != null ? `EUR ${detail.cardmarket.marketEur.toFixed(2)}` : "--"}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {gradesWithData.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ ...mono, fontSize: 11, color: colors.moss, margin: "0 0 8px", letterSpacing: 0.5 }}>
+                  PRIX GRADES (D'APRES LES VENTES EBAY)
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
+                  {gradesWithData.map((g) => {
+                    const g_ = detail.psaPrices[g];
+                    return (
+                      <div key={g} style={{ backgroundColor: colors.bark, borderRadius: 8, padding: "8px 10px" }}>
+                        <p style={{ ...mono, fontSize: 10, color: colors.goldBright, margin: 0 }}>{GRADE_LABELS[g] || g}</p>
+                        <p style={{ ...mono, fontSize: 14, fontWeight: 600, color: colors.ink, margin: "2px 0 0" }}>
+                          ${g_.price.toFixed(0)}
+                        </p>
+                        <p style={{ ...mono, fontSize: 9, color: colors.ink, opacity: 0.45, margin: "1px 0 0" }}>
+                          {g_.sales} vente{g_.sales > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <p style={{ ...mono, fontSize: 11, color: colors.moss, margin: "0 0 8px", letterSpacing: 0.5 }}>
+                HISTORIQUE DE PRIX
+              </p>
+              <DetailChart history={detail.rawHistory} currency="USD" />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CardRow({ item }) {
   const [open, setOpen] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const hasChange = item.change7d !== null && item.change7d !== undefined;
   const isUp = hasChange && item.change7d > 0;
   const days = item.changeDays || 7;
   const isApprox = !!item.changeIsApproximate;
 
   return (
-    <div style={{ borderBottom: `1px solid ${colors.ink}20`, cursor: "pointer" }}>
+    <div style={{ borderBottom: `1px solid ${colors.ink}20` }}>
       <div
         onClick={() => setOpen(!open)}
-        style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 8px" }}
+        style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 8px", cursor: "pointer" }}
       >
         {item.imageUrl && (
           <img
@@ -165,8 +379,29 @@ function CardRow({ item }) {
       {open && (
         <div style={{ padding: "0 8px 20px" }}>
           <Sparkline history={item.history} />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDetail(true);
+            }}
+            style={{
+              ...mono,
+              fontSize: 12,
+              fontWeight: 600,
+              padding: "8px 16px",
+              borderRadius: 999,
+              border: "none",
+              backgroundColor: colors.goldBright,
+              color: colors.bark,
+              cursor: "pointer",
+              marginTop: 10,
+            }}
+          >
+            Voir tous les details (EUR, PSA, historique complet)
+          </button>
         </div>
       )}
+      {showDetail && <CardDetailModal item={item} onClose={() => setShowDetail(false)} />}
     </div>
   );
 }
