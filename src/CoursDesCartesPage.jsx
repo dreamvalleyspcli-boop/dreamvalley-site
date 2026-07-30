@@ -309,12 +309,14 @@ function CardDetailModal({ item, onClose }) {
         {detail && !error && (
           <>
             <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 140, backgroundColor: colors.bark, borderRadius: 10, padding: 12 }}>
-                <p style={{ ...mono, fontSize: 10, color: colors.moss, margin: 0, letterSpacing: 0.5 }}>TCGPLAYER (USD)</p>
-                <p style={{ ...display, fontSize: 22, fontWeight: 600, color: colors.ink, margin: "4px 0 0" }}>
-                  {detail.priceUsd != null ? `$${detail.priceUsd.toFixed(2)}` : "--"}
-                </p>
-              </div>
+              {detail.priceUsd != null && (
+                <div style={{ flex: 1, minWidth: 140, backgroundColor: colors.bark, borderRadius: 10, padding: 12 }}>
+                  <p style={{ ...mono, fontSize: 10, color: colors.moss, margin: 0, letterSpacing: 0.5 }}>TCGPLAYER (USD)</p>
+                  <p style={{ ...display, fontSize: 22, fontWeight: 600, color: colors.ink, margin: "4px 0 0" }}>
+                    ${detail.priceUsd.toFixed(2)}
+                  </p>
+                </div>
+              )}
               {detail.cardmarket && (
                 <div style={{ flex: 1, minWidth: 140, backgroundColor: colors.bark, borderRadius: 10, padding: 12 }}>
                   <p style={{ ...mono, fontSize: 10, color: colors.gold, margin: 0, letterSpacing: 0.5 }}>CARDMARKET (EUR)</p>
@@ -353,7 +355,15 @@ function CardDetailModal({ item, onClose }) {
               <p style={{ ...mono, fontSize: 11, color: colors.moss, margin: "0 0 8px", letterSpacing: 0.5 }}>
                 HISTORIQUE DE PRIX
               </p>
-              <DetailChart history={detail.rawHistory} currency="USD" />
+              {(() => {
+                // TCGdex (français) ne fournit pas d'historique long comme
+                // PokemonPriceTracker -- on utilise alors notre propre suivi
+                // quotidien (déjà présent sur la carte dans la liste) en repli.
+                const hasApiHistory = detail.rawHistory && detail.rawHistory.length >= 2;
+                const chartHistory = hasApiHistory ? detail.rawHistory : (item.history || []);
+                const chartCurrency = detail.priceUsd != null ? "USD" : "EUR";
+                return <DetailChart history={chartHistory} currency={chartCurrency} />;
+              })()}
             </div>
           </>
         )}
