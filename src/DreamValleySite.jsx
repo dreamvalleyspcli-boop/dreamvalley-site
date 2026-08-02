@@ -1545,6 +1545,7 @@ function AdminPage() {
     { id: "avis", label: "Avis clients" },
     { id: "jeu", label: "Codes du jeu" },
     { id: "calendrier", label: "Calendrier" },
+    { id: "sources", label: "Sources à surveiller" },
     { id: "liens", label: "Liens rapides" },
   ];
 
@@ -1763,6 +1764,7 @@ function AdminPage() {
         {activeTab === "avis" && <ReviewsAdmin token={token} />}
         {activeTab === "jeu" && <GameCodesAdmin token={token} />}
         {activeTab === "calendrier" && <CalendarAdmin token={token} />}
+        {activeTab === "sources" && <SourcesAdmin token={token} />}
         {activeTab === "liens" && <QuickLinks />}
       </div>
     </div>
@@ -2169,6 +2171,141 @@ function CalendarAdmin({ token }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function SourcesAdmin({ token }) {
+  const [categories, setCategoriesList] = useState([]);
+  const [method, setMethod] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${CHECKOUT_API_URL}/api/admin/sources`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && Array.isArray(data.categories)) {
+          setCategoriesList(data.categories);
+          setMethod(data.method || "");
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [token]);
+
+  function updateCategoryTitle(index, value) {
+    setCategoriesList((c) => {
+      const next = [...c];
+      next[index] = { ...next[index], title: value };
+      return next;
+    });
+  }
+
+  function updateCategoryItems(index, value) {
+    setCategoriesList((c) => {
+      const next = [...c];
+      next[index] = { ...next[index], items: value.split("\n") };
+      return next;
+    });
+  }
+
+  function addCategory() {
+    setCategoriesList((c) => [...c, { title: "Nouvelle catégorie", items: [""] }]);
+  }
+
+  function removeCategory(index) {
+    if (!window.confirm("Supprimer cette catégorie de sources ?")) return;
+    setCategoriesList((c) => c.filter((_, i) => i !== index));
+  }
+
+  async function save() {
+    setSaving(true);
+    setMessage("");
+    try {
+      const res = await fetch(`${CHECKOUT_API_URL}/api/admin/sources/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ categories, method }),
+      });
+      const data = await res.json();
+      if (data && Array.isArray(data.categories)) {
+        setCategoriesList(data.categories);
+        setMethod(data.method || "");
+        setMessage("Enregistré ✓");
+      } else {
+        setMessage(data.error || "Erreur");
+      }
+    } catch {
+      setMessage("Erreur de connexion");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return <p className="text-sm mt-14" style={{ color: colors.ink, opacity: 0.6 }}>Chargement des sources...</p>;
+  }
+
+  return (
+    <div className="mt-0">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+        <h2 style={{ ...display, color: colors.ink, fontSize: "22px" }}>Sources à surveiller</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          {message && <span className="text-xs" style={{ color: colors.moss }}>{message}</span>}
+          <button onClick={addCategory} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold border" style={{ borderColor: colors.ink, color: colors.ink }}>
+            <Plus size={14} /> Catégorie
+          </button>
+          <button onClick={save} disabled={saving} className="rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60" style={{ backgroundColor: colors.goldBright, color: colors.bark }}>
+            {saving ? "..." : "Enregistrer"}
+          </button>
+        </div>
+      </div>
+      <p className="text-xs mb-6" style={{ color: colors.ink, opacity: 0.55 }}>
+        Liste privée à consulter chaque semaine pour alimenter le calendrier — une source par ligne dans chaque catégorie.
+      </p>
+
+      <div className="space-y-5">
+        {categories.map((cat, ci) => (
+          <div key={ci} className="rounded-xl border p-4" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                value={cat.title}
+                onChange={(e) => updateCategoryTitle(ci, e.target.value)}
+                className="flex-1 px-2.5 py-1.5 rounded-lg border text-sm font-semibold"
+                style={{ borderColor: "rgba(240,236,224,0.2)", backgroundColor: colors.parchment, color: colors.ink }}
+              />
+              <button onClick={() => removeCategory(ci)} className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ color: "#e08a7d" }} aria-label="Supprimer la catégorie">
+                <Trash2 size={15} />
+              </button>
+            </div>
+            <textarea
+              value={(cat.items || []).join("\n")}
+              onChange={(e) => updateCategoryItems(ci, e.target.value)}
+              rows={Math.max(3, (cat.items || []).length)}
+              placeholder={"Une source par ligne, ex :\nPokeBeach (pokebeach.com) — annonces et previews"}
+              className="w-full px-3 py-2 rounded-lg border text-sm resize-y"
+              style={{ borderColor: "rgba(240,236,224,0.15)", backgroundColor: colors.parchment, color: colors.ink }}
+            />
+          </div>
+        ))}
+        {categories.length === 0 && (
+          <p className="text-sm" style={{ color: colors.ink, opacity: 0.6 }}>Aucune catégorie pour l'instant — clique sur "Catégorie" pour en ajouter une.</p>
+        )}
+      </div>
+
+      <div className="mt-6 rounded-xl border p-4" style={{ backgroundColor: colors.parchmentSoft, borderColor: "rgba(240,236,224,0.1)" }}>
+        <label className="text-sm font-semibold block mb-2" style={{ color: colors.ink }}>Méthode / rappel</label>
+        <textarea
+          value={method}
+          onChange={(e) => setMethod(e.target.value)}
+          rows={4}
+          className="w-full px-3 py-2 rounded-lg border text-sm resize-y"
+          style={{ borderColor: "rgba(240,236,224,0.15)", backgroundColor: colors.parchment, color: colors.ink }}
+        />
       </div>
     </div>
   );
