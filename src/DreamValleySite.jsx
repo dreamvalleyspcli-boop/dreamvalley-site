@@ -2674,7 +2674,7 @@ function LegalPage() {
           <p>N° SIRET : 887 853 976 00025</p>
           <p>Siège de l'activité : 1 place de la Libération, 59660 Merville, France</p>
           <p>Email : dreamvalleyspcli@gmail.com</p>
-          <p>Téléphone : <PhoneReveal number="07 44 42 99 59" /></p>
+          <p>Téléphone : <PhoneReveal number="" /></p>
           <p>Directeur de la publication : <em>[à compléter — nom et prénom de la personne physique responsable, obligatoire pour une entreprise individuelle]</em></p>
           <p><strong>Hébergement</strong> — Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, États-Unis — cloudflare.com</p>
         </Section>
